@@ -159,34 +159,4 @@ func main() {
 
 	script = multipartWrap(script)
 	fmt.Println(script)
-	/*
-		body := &bytes.Buffer{}
-		body.WriteString("foo")
-		path, _ := os.Getwd()
-		//path += "/data/cloud-config.yml"
-		path += "/outfile"
-		extraParams := map[string]string{
-			"title":       "My Document",
-			"author":      "Matt Aimonetti",
-			"description": "A document with all the Go programming language secrets",
-		}
-
-		file, err := os.Open(path)
-		check(err)
-		defer file.Close()
-
-		writer := multipart.NewWriter(body)
-		part, err := writer.CreateFormFile("file", filepath.Base(path))
-		check(err)
-
-		mraaa, err := io.Copy(part, file)
-		fmt.Println(mraaa)
-		part.Write([]byte("dafuq"))
-
-		for key, val := range extraParams {
-			writer.WriteField(key, val)
-		}
-		writer.SetBoundary("wat")
-		writer.Close()
-	*/
 }
