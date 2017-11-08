@@ -73,7 +73,7 @@ func makeCliRequest() string {
 	cmd += fmt.Sprintf("--client-token %s ", token)
 	cmd += fmt.Sprintf("--user-data %s ", "fileb://user-data.multipart.gz")
 	cmd += fmt.Sprintf("--block-device-mappings %s ", blockDeviceMappings)
-	cmd += fmt.Sprintf("--dry-run ")
+	//cmd += fmt.Sprintf("--dry-run ")
 	return cmd
 }
 

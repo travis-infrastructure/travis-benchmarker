@@ -3,15 +3,30 @@
 # set -o errexit
 set -o pipefail
 shopt -s nullglob
-set -x
+#set -x
 
 __extra() {
-    run_d="$1"
-    # Remove 'set -o errexit' from /var/tmp/travis-run.d/travis-worker-prestart-hook
-    sed -i 's/set -o errexit//g' "${run_d}/travis-worker-prestart-hook"
+  run_d="$1"
+  # Remove 'set -o errexit' from /var/tmp/travis-run.d/travis-worker-prestart-hook
+  sed -i 's/set -o errexit//g' "${run_d}/travis-worker-prestart-hook"
+}
+
+__now() {
+  uptime_as_int=$(printf "%.0f\n" "$(awk '{ print $1}' /proc/uptime)")
+  echo "$uptime_as_int"
+}
+
+__mark() {
+  msg="$1"
+  echo "$(__now) $msg" >> /tmp/stopwatch
 }
 
 main() {
+  TIME=/usr/bin/time
+  TIME_FORMAT="-f %E \t %C"
+  TIME_ARGS="--output=/tmp/timed"
+
+  __mark "Starting cloud-init."
   : "${ETCDIR:=/etc}"
   : "${VARTMP:=/var/tmp}"
   : "${RUNDIR:=/var/tmp/travis-run.d}"
@@ -28,6 +43,7 @@ main() {
 
   chown -R travis:travis "${RUNDIR}"
 
+  __mark "Setting up init."
   if [[ -d "${ETCDIR}/systemd/system" ]]; then
     cp -v "${VARTMP}/travis-worker.service" \
       "${ETCDIR}/systemd/system/travis-worker.service"
@@ -39,13 +55,16 @@ main() {
       "${ETCDIR}/init/travis-worker.conf"
   fi
 
-  service travis-worker stop || true
-  service travis-worker start || true
+  __mark "Stopping travis-worker."
+  $TIME --append $TIME_ARGS $TIME_FORMAT service travis-worker stop || true
+  __mark "Starting travis-worker."
+  time service travis-worker start || true
 
   iptables -t nat -I PREROUTING -p tcp -d '169.254.169.254' \
     --dport 80 -j DNAT --to-destination '192.0.2.1'
 
-  __wait_for_docker
+  __mark "Waiting for docker"
+  $TIME --append $TIME_ARGS $TIME_FORMAT __wait_for_docker
 
   local registry_hostname
   registry_hostname="$(cat "${RUNDIR}/registry-hostname")"
@@ -55,6 +74,7 @@ main() {
   dig +short "${registry_hostname}" | while read -r ipv4; do
     iptables -I DOCKER -s "${ipv4}" -j DROP || true
   done
+  __mark "Done with cloud-init"
 }
 
 __wait_for_docker() {
