@@ -75,7 +75,6 @@ func makeCliRequest() string {
 	cmd += fmt.Sprintf("--block-device-mappings %s ", blockDeviceMappings)
 	cmd += fmt.Sprintf("--dry-run ")
 	return cmd
-
 }
 
 func multipartWrapPart(body string, filename string, contenttype string, filetype string) string {
@@ -89,19 +88,15 @@ Content-Disposition: attachment; filename="%s"
 Content-Transfer-Encoding: 7bit
 Content-Type: text/%s
 Mime-Version: 1.0
-%s
-`, filename, contenttype, cc)
-	return fmt.Sprintf("%s\n\n%s", header, body)
-
+%s`, filename, contenttype, cc)
+	return fmt.Sprintf("%s\n%s", header, body)
 }
 
 func multipartWrap(s string) string {
 	header := `Content-Type: multipart/mixed; boundary="MIMEBOUNDARY"
-MIME-Version: 1.0
-`
+MIME-Version: 1.0`
 	footer := "--MIMEBOUNDARY--"
 	return header + s + footer
-
 }
 
 func makeMultipart() string {
