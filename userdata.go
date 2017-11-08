@@ -53,23 +53,16 @@ func (c *Conf) getConfSh() *Conf {
 	return c
 }
 
-func eofWrap(s string) string {
-	script := ""
-	script += "\nbash <<\"EOF\"\n"
-	script += fmt.Sprintf(string(s))
-	script += "EOF\n"
-	return script
-}
-
 func makeCliRequest() string {
 	t, err := ioutil.ReadFile("/proc/sys/kernel/random/uuid")
 	check(err)
 	token := strings.TrimSpace(string(t))
 	ami := "ami-a43c8dde"
-	instanceType := "t2.micro"
+	instanceType := "c3.2xlarge"
 	securityGroupIds := "\"sg-4e80c734\" \"sg-4d80c737\""
 	subnet := "subnet-addd3791"
 	tags := "'ResourceType=instance,Tags=[{Key=role,Value=aj-test}]' "
+	blockDeviceMappings := "'DeviceName=/dev/sda1,VirtualName=/dev/xvdc,Ebs={DeleteOnTermination=true,SnapshotId=snap-05ddc125d72e3592d,VolumeSize=8,VolumeType=gp2}'"
 
 	cmd := "aws ec2 run-instances --region us-east-1 --key-name aj "
 	cmd += fmt.Sprintf("--image-id %s ", ami)
@@ -78,41 +71,11 @@ func makeCliRequest() string {
 	cmd += fmt.Sprintf("--subnet-id %s ", subnet)
 	cmd += fmt.Sprintf("--tag-specifications %s ", tags)
 	cmd += fmt.Sprintf("--client-token %s ", token)
-	cmd += fmt.Sprintf("--user-data %s ", "fileb://user-data.sh.gz")
+	cmd += fmt.Sprintf("--user-data %s ", "fileb://user-data.multipart.gz")
+	cmd += fmt.Sprintf("--block-device-mappings %s ", blockDeviceMappings)
 	cmd += fmt.Sprintf("--dry-run ")
 	return cmd
 
-}
-
-func MakeEof() {
-	// write cloud-config.sh
-	var c Conf
-	c.getConf()
-	err := ioutil.WriteFile("cloud-config.sh", []byte(c.AsScript), 0755)
-	check(err)
-
-	script := "#!/bin/bash\n\n"
-
-	// write cloud-init.sh
-	f, err := ioutil.ReadFile("data/cloud-init.sh")
-	check(err)
-	script += eofWrap(c.AsScript)
-	script += eofWrap(string(f))
-
-	err = ioutil.WriteFile("user-data.sh", []byte(script), 0755)
-	check(err)
-
-	// compress file with gzip
-	zipped, _ := os.Create("user-data.sh.gz")
-	// Create gzip writer.
-	z := gzip.NewWriter(zipped)
-	// Write bytes in compressed form to the file.
-	x, err := ioutil.ReadFile("user-data.sh")
-	check(err)
-	z.Write(x)
-
-	// Close the file.
-	z.Close()
 }
 
 func multipartWrapPart(body string, filename string, contenttype string, filetype string) string {
@@ -126,7 +89,6 @@ Content-Disposition: attachment; filename="%s"
 Content-Transfer-Encoding: 7bit
 Content-Type: text/%s
 Mime-Version: 1.0
-
 %s
 `, filename, contenttype, cc)
 	return fmt.Sprintf("%s\n\n%s", header, body)
@@ -136,17 +98,13 @@ Mime-Version: 1.0
 func multipartWrap(s string) string {
 	header := `Content-Type: multipart/mixed; boundary="MIMEBOUNDARY"
 MIME-Version: 1.0
-
 `
 	footer := "--MIMEBOUNDARY--"
 	return header + s + footer
 
 }
 
-func main() {
-	cmd := makeCliRequest()
-	fmt.Println(cmd)
-	//MakeEof()
+func makeMultipart() string {
 	script := ""
 
 	f, err := ioutil.ReadFile("data/cloud-config.yml")
@@ -158,5 +116,24 @@ func main() {
 	script += multipartWrapPart(string(f), "cloud-init", "x-shellscript", "sh")
 
 	script = multipartWrap(script)
-	fmt.Println(script)
+	return script
+}
+
+func main() {
+	cmd := makeCliRequest()
+	fmt.Println(cmd)
+
+	// generate multipart encoded file
+	script := makeMultipart()
+	err := ioutil.WriteFile("user-data.multipart", []byte(script), 0755)
+	check(err)
+
+	// compress file with gzip and write to disk
+	zipped, _ := os.Create("user-data.multipart.gz")
+	z := gzip.NewWriter(zipped)
+	x, err := ioutil.ReadFile("user-data.multipart")
+	check(err)
+	z.Write(x)
+	z.Close()
+
 }

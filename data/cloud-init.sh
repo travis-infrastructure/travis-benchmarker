@@ -1,13 +1,21 @@
 #!/usr/bin/env bash
 # vim:filetype=sh
-set -o errexit
+# set -o errexit
 set -o pipefail
 shopt -s nullglob
+set -x
+
+__extra() {
+    run_d="$1"
+    # Remove 'set -o errexit' from /var/tmp/travis-run.d/travis-worker-prestart-hook
+    sed -i 's/set -o errexit//g' "${run_d}/travis-worker-prestart-hook"
+}
 
 main() {
   : "${ETCDIR:=/etc}"
   : "${VARTMP:=/var/tmp}"
   : "${RUNDIR:=/var/tmp/travis-run.d}"
+  __extra "${RUNDIR}"
 
   local instance_id
   instance_id="$(cat "${RUNDIR}/instance-id")"
