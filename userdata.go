@@ -35,21 +35,6 @@ func (c *Conf) getConf() *Conf {
 	check(err)
 	err = yaml.UnmarshalStrict(yamlFile, &c)
 	check(err)
-	c.getConfSh()
-	return c
-}
-
-func (c *Conf) getConfSh() *Conf {
-	script := "#!/bin/bash\n\n"
-	for _, udf := range c.UserDataFiles {
-		if udf.Encoding == "b64" {
-			script += fmt.Sprintf("echo '%s' | base64 --decode > %s\n\n", udf.Content, udf.Path)
-		} else {
-			script += fmt.Sprintf("echo '%s' > %s\n\n", udf.Content, udf.Path)
-		}
-	}
-	script += "logger 'Done writing user-data files.'\n"
-	c.AsScript = script
 	return c
 }
 
@@ -129,5 +114,4 @@ func main() {
 	check(err)
 	z.Write(x)
 	z.Close()
-
 }
