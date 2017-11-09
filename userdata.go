@@ -61,7 +61,7 @@ func makeCliRequest() string {
 	instanceType := "c3.2xlarge"
 	securityGroupIds := "\"sg-4e80c734\" \"sg-4d80c737\""
 	subnet := "subnet-addd3791"
-	tags := "'ResourceType=instance,Tags=[{Key=role,Value=aj-test}]' "
+	tags := "'ResourceType=instance,Tags=[{Key=role,Value=aj-test}]'"
 	blockDeviceMappings := "'DeviceName=/dev/sda1,VirtualName=/dev/xvdc,Ebs={DeleteOnTermination=true,SnapshotId=snap-05ddc125d72e3592d,VolumeSize=8,VolumeType=gp2}'"
 
 	cmd := "aws ec2 run-instances --region us-east-1 --key-name aj "
@@ -73,7 +73,6 @@ func makeCliRequest() string {
 	cmd += fmt.Sprintf("--client-token %s ", token)
 	cmd += fmt.Sprintf("--user-data %s ", "fileb://user-data.multipart.gz")
 	cmd += fmt.Sprintf("--block-device-mappings %s ", blockDeviceMappings)
-	//cmd += fmt.Sprintf("--dry-run ")
 	return cmd
 }
 

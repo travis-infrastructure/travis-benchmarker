@@ -11,20 +11,28 @@ __extra() {
   sed -i 's/set -o errexit//g' "${run_d}/travis-worker-prestart-hook"
 }
 
-__now() {
-  uptime_as_int=$(printf "%.0f\n" "$(awk '{ print $1}' /proc/uptime)")
-  echo "$uptime_as_int"
+__mark() {
+  now=$(printf "%.0f\n" "$(awk '{ print $1}' /proc/uptime)")
+  msg="$1"
+  echo "$now    $msg" >> /tmp/stopwatch
 }
 
-__mark() {
-  msg="$1"
-  echo "$(__now) $msg" >> /tmp/stopwatch
+__prestart_hook() {
+  TIME=/usr/bin/time
+  TIME_FORMAT="-f %E\t%C"
+  TIME_ARGS="--output=/tmp/stopwatch"
+  source /etc/default/travis-worker-cloud-init
+  $TIME --append $TIME_ARGS $TIME_FORMAT /var/tmp/travis-run.d/travis-worker-prestart-hook
+}
+
+__finish() {
+  cat /tmp/stopwatch | wall
 }
 
 main() {
   TIME=/usr/bin/time
-  TIME_FORMAT="-f %E \t %C"
-  TIME_ARGS="--output=/tmp/timed"
+  TIME_FORMAT="-f %E\t%C"
+  TIME_ARGS="--output=/tmp/stopwatch"
 
   __mark "Starting cloud-init."
   : "${ETCDIR:=/etc}"
@@ -56,15 +64,16 @@ main() {
   fi
 
   __mark "Stopping travis-worker."
-  $TIME --append $TIME_ARGS $TIME_FORMAT service travis-worker stop || true
+  service travis-worker stop || true
   __mark "Starting travis-worker."
-  time service travis-worker start || true
+  $TIME --append $TIME_ARGS $TIME_FORMAT service travis-worker start || true
 
   iptables -t nat -I PREROUTING -p tcp -d '169.254.169.254' \
     --dport 80 -j DNAT --to-destination '192.0.2.1'
 
   __mark "Waiting for docker"
-  $TIME --append $TIME_ARGS $TIME_FORMAT __wait_for_docker
+  __wait_for_docker
+  __mark "Docker now ready"
 
   local registry_hostname
   registry_hostname="$(cat "${RUNDIR}/registry-hostname")"
@@ -75,6 +84,11 @@ main() {
     iptables -I DOCKER -s "${ipv4}" -j DROP || true
   done
   __mark "Done with cloud-init"
+
+  __mark "Starting prestart hook"
+  __prestart_hook
+  __mark "Finished"
+  __finish
 }
 
 __wait_for_docker() {
