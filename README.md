@@ -2,17 +2,17 @@
 
 ## Usage
 
-`go run userdata.go`
+`./benchmark.sh 5 standard`
 
-This will generate two files:
+This will:
 
-- `user-data.multipart.gz`
-- `user-data.multipart`
-
-And will also output an `aws ec2 run-instances` command that can be run to create the instance with the associated userdata.
+- look in the `standard/` subdirectory for `cloud-config.yml` and `cloud-init.sh`
+- compress these into a file to be passed as userdata
+- spin up 5 instances with the compressed userdata
+- (TODO) start an ngrok listener to capture output from instances as they complete cloud-init (because the output of `aws ec2 get-console-output` is not reliable).
 
 ## To do
 
-- figure out how to time instance launch
+- finish `listener.py`
 - modify to use `docker load` (or import or whatever) instead of `docker pull`
 - modify to use other graph drivers
