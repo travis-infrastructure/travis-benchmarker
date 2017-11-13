@@ -58,7 +58,8 @@ run_instances() {
 die() {
   usage="$0 LABEL COUNT"
   echo "$@"
-  echo "$usage"
+  echo "USAGE: "
+  echo "  $usage"
   exit 1
 }
 
@@ -88,8 +89,9 @@ wait_for_cohort_running() {
   count="$1"
   label="$2"
   num=0
-  while [ "$num" -lt "$count" ]; do
+  while true; do
     num=$(echo "$(all_ids "$label")" | wc -l)
+    [ "$num" -ge "$count" ] && break
     echo "have $num instances online, want $count, sleeping 5"
     sleep 5
   done
@@ -108,7 +110,6 @@ wait_for_cohort_provisioned() {
   count="$1"
   label="$2"
   ids="$(all_ids "$label")"
-  num=0
 
   done=""
   done_count=0
@@ -125,9 +126,7 @@ wait_for_cohort_provisioned() {
       fi
     done
 
-    if [ "$done_count" -ge "$count" ]; then
-      break
-    fi
+    [ "$done_count" -ge "$count" ] && break
 
     echo "Have $done_count provisioned, want $count, sleeping 5 (elapsed: $(date -d@$SECONDS -u +%H:%M:%S))"
     sleep 5
@@ -137,16 +136,11 @@ wait_for_cohort_provisioned() {
 }
 
 time_since_launch() {
+  instance_id="$1"
   now=$(date "+%s")
-  launch_time="$(aws ec2 describe-instances --instance-id "$1" | jq .Reservations[].Instances[].LaunchTime | tr -d '"')"
+  launch_time="$(aws ec2 describe-instances --instance-id "$instance_id" | jq .Reservations[].Instances[].LaunchTime | tr -d '"')"
   result=$(($now - $(date --date="$launch_time" "+%s")))
   echo "$(date -d@$result -u +%H:%M:%S)"
-}
-
-get_instance_launch_time() {
-
-  aws ec2 describe-instances --instance-id "$1" | jq .Reservations[].Instances[].LaunchTime | tr -d '"'
-  # date --date="$x" "+%s"
 }
 
 all_ids() {
@@ -173,6 +167,4 @@ main() {
   wait_for_cohort_provisioned "$count" "$label"
 }
 
-#run_instances standard
 main "$@"
-#!/bin/bash
