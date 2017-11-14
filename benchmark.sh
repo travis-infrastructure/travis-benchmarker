@@ -49,7 +49,7 @@ run_instances() {
     --instance-type c3.2xlarge \
     --security-group-ids "sg-4e80c734" "sg-4d80c737" \
     --subnet-id subnet-addd3791 \
-    --tag-specifications "'ResourceType=instance,Tags=[{Key=role,Value=aj-test},{Key=label,Value='$label'}]'" \
+    --tag-specifications '"ResourceType=instance,Tags=[{Key=role,Value=aj-test},{Key=label,Value='$label'}]"' \
     --client-token "$(make_token)" \
     --user-data 'fileb://'${label}'/user-data.'${label}'.multipart.gz' \
     --block-device-mappings "'DeviceName=/dev/sda1,VirtualName=/dev/xvdc,Ebs={DeleteOnTermination=true,SnapshotId=snap-05ddc125d72e3592d,VolumeSize=8,VolumeType=gp2}'"
@@ -88,7 +88,6 @@ wait_for_cohort_running() {
   echo "Waiting for cohort to be running"
   count="$1"
   label="$2"
-  num=0
   while true; do
     num=$(echo "$(all_ids "$label")" | wc -l)
     [ "$num" -ge "$count" ] && break
@@ -110,19 +109,20 @@ wait_for_cohort_provisioned() {
   count="$1"
   label="$2"
   ids="$(all_ids "$label")"
+  echo "Waiting for $count $label instances to be provisioned..."
 
   done=""
   done_count=0
   while true; do
     for iid in $ids; do
-      [[ "$done" == *"$iid" ]] && continue
+      [[ "$done" == *"$iid"* ]] && continue
 
-      if ! vm_is_provisioned "$iid"; then
-        echo "$iid not done yet"
-      else
+      if vm_is_provisioned "$iid"; then
         echo "$iid is done! $(time_since_launch "$iid") since launch"
         done="$done $iid"
         done_count=$((done_count + 1))
+      else
+        echo "$iid not done yet"
       fi
     done
 
@@ -155,6 +155,11 @@ all_ids() {
   echo "$ids"
 }
 
+run_listener() {
+    python listener.py
+    ngrok http 5000 --subdomain soulshake.ngrok.io
+}
+
 main() {
   count="$1"
   label="$2"
@@ -165,6 +170,7 @@ main() {
   make_cohort "$count" "$label"
   wait_for_cohort_running "$count" "$label"
   wait_for_cohort_provisioned "$count" "$label"
+  #run_listener
 }
 
 main "$@"

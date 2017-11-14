@@ -11,8 +11,12 @@ __extra() {
   sed -i 's/set -o errexit//g' "${run_d}/travis-worker-prestart-hook"
 }
 
+__uptime_in_secs() {
+  printf "%.0f\n" "$(awk '{ print $1}' /proc/uptime)"
+}
+
 __mark() {
-  now=$(printf "%.0f\n" "$(awk '{ print $1}' /proc/uptime)")
+  now=$(__uptime_in_secs)
   msg="$1"
   echo "$now    $msg" >> /tmp/stopwatch
 }
@@ -27,12 +31,18 @@ __prestart_hook() {
 
 __finish() {
   cat /tmp/stopwatch | wall
+  __post_to_ngrok '{"finished": '"$(tail -n1 /tmp/stopwatch)"', 'instance_id': '$(cat /var/tmp/travis-run.d/instance_id)'}'
+}
+
+__post_to_ngrok() {
+  curl -X POST -d "$@" soulshake.ngrok.io
 }
 
 main() {
   TIME=/usr/bin/time
   TIME_FORMAT="-f %E\t%C"
   TIME_ARGS="--output=/tmp/stopwatch"
+  __post_to_ngrok "{'start': '$(date)', 'instance_id': '$(cat /var/tmp/travis-run.d/instance_id)'}"
 
   __mark "Starting cloud-init."
   : "${ETCDIR:=/etc}"
