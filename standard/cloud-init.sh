@@ -15,12 +15,6 @@ __uptime_in_secs() {
   printf "%.0f\n" "$(awk '{ print $1}' /proc/uptime)"
 }
 
-__mark() {
-  now=$(__uptime_in_secs)
-  msg="$1"
-  echo "$now    $msg" >> /tmp/stopwatch
-}
-
 __prestart_hook() {
   TIME=/usr/bin/time
   TIME_FORMAT="-f %E\t%C"
@@ -29,22 +23,33 @@ __prestart_hook() {
   $TIME --append $TIME_ARGS $TIME_FORMAT /var/tmp/travis-run.d/travis-worker-prestart-hook
 }
 
-__finish() {
-  cat /tmp/stopwatch | wall
-  __post_to_ngrok '{"finished": '"$(tail -n1 /tmp/stopwatch)"', 'instance_id': '$(cat /var/tmp/travis-run.d/instance_id)'}'
+__make_metadata(){
+  instance_type="$(curl http://169.254.169.254/latest/meta-data/instance-type)"
+  metadata='{"instance_type": '\"$instance_type\"'}'
+  echo "$metadata"
+}
+
+__mark() {
+  action="$1"
+  : "${RUNDIR:=/var/tmp/travis-run.d}"
+
+  instance_id="$(cat "${RUNDIR}/instance-id")"
+  now="$(__uptime_in_secs)"
+  data='{"instance_id":'\"$instance_id\"','\"$action\"':'$now',"metadata":'$(__make_metadata)'}'
+
+  __post_to_ngrok "$data"
 }
 
 __post_to_ngrok() {
-  curl -X POST -d "$@" soulshake.ngrok.io
+  curl -H "Content-Type: application/json" -X POST -d "$@" soulshake.ngrok.io
 }
 
 main() {
+  __mark "cloud-init-start"
   TIME=/usr/bin/time
   TIME_FORMAT="-f %E\t%C"
   TIME_ARGS="--output=/tmp/stopwatch"
-  __post_to_ngrok "{'start': '$(date)', 'instance_id': '$(cat /var/tmp/travis-run.d/instance_id)'}"
 
-  __mark "Starting cloud-init."
   : "${ETCDIR:=/etc}"
   : "${VARTMP:=/var/tmp}"
   : "${RUNDIR:=/var/tmp/travis-run.d}"
@@ -61,7 +66,6 @@ main() {
 
   chown -R travis:travis "${RUNDIR}"
 
-  __mark "Setting up init."
   if [[ -d "${ETCDIR}/systemd/system" ]]; then
     cp -v "${VARTMP}/travis-worker.service" \
       "${ETCDIR}/systemd/system/travis-worker.service"
@@ -73,17 +77,13 @@ main() {
       "${ETCDIR}/init/travis-worker.conf"
   fi
 
-  __mark "Stopping travis-worker."
   service travis-worker stop || true
-  __mark "Starting travis-worker."
   $TIME --append $TIME_ARGS $TIME_FORMAT service travis-worker start || true
 
   iptables -t nat -I PREROUTING -p tcp -d '169.254.169.254' \
     --dport 80 -j DNAT --to-destination '192.0.2.1'
 
-  __mark "Waiting for docker"
   __wait_for_docker
-  __mark "Docker now ready"
 
   local registry_hostname
   registry_hostname="$(cat "${RUNDIR}/registry-hostname")"
@@ -93,12 +93,11 @@ main() {
   dig +short "${registry_hostname}" | while read -r ipv4; do
     iptables -I DOCKER -s "${ipv4}" -j DROP || true
   done
-  __mark "Done with cloud-init"
 
-  __mark "Starting prestart hook"
+  __mark "prestart-hook-start"
   __prestart_hook
-  __mark "Finished"
-  __finish
+  __mark "prestart-hook-finish"
+  __mark "cloud-init-finish"
 }
 
 __wait_for_docker() {

@@ -2,6 +2,7 @@
 
 make_multipart() {
   label="$1"
+
   read -r -d '' HEADER <<-EOF
 Content-Type: multipart/mixed; boundary="MIMEBOUNDARY"
 MIME-Version: 1.0
@@ -30,6 +31,7 @@ EOF
   echo "$HEADER" >"$dest"
   cat "${label}/cloud-config.yml" >>"$dest"
   echo "$BOUNDARY" >>"$dest"
+  # FIXME: add extra stuff here
   cat "${label}/cloud-init.sh" >>"$dest"
   echo "$FOOTER" >>"$dest"
 
@@ -41,18 +43,39 @@ make_token() {
 }
 
 run_instances() {
+  # This can be gp2 for General Purpose SSD, io1 for Provisioned IOPS SSD, st1 for Throughput Optimized HDD, sc1 for Cold HDD, or standard for Magnetic volumes.
   label="$1"
-  echo aws ec2 run-instances \
+  instance_type="$2"
+  # subnet-2e369b67 => us-east-1b
+  # subnet-addd3791 => us-east-1e (io1 not supported in this AZ)
+
+  echo -n aws ec2 run-instances \
     --region us-east-1 \
+    --placement 'AvailabilityZone=us-east-1b' \
     --key-name aj \
     --image-id ami-a43c8dde \
-    --instance-type c3.2xlarge \
+    --instance-type "$instance_type" \
     --security-group-ids "sg-4e80c734" "sg-4d80c737" \
-    --subnet-id subnet-addd3791 \
+    --subnet-id subnet-2e369b67 \
     --tag-specifications '"ResourceType=instance,Tags=[{Key=role,Value=aj-test},{Key=label,Value='$label'}]"' \
     --client-token "$(make_token)" \
-    --user-data 'fileb://'${label}'/user-data.'${label}'.multipart.gz' \
-    --block-device-mappings "'DeviceName=/dev/sda1,VirtualName=/dev/xvdc,Ebs={DeleteOnTermination=true,SnapshotId=snap-05ddc125d72e3592d,VolumeSize=8,VolumeType=gp2}'"
+    --user-data 'fileb://'${label}'/user-data.'${label}'.multipart.gz '
+
+  case "$instance_type" in
+  c5.9xlarge)
+    # c5.9xlarge + ebs io1 volume
+    #echo --block-device-mappings "'DeviceName=/dev/sda1,VirtualName=/dev/xvdc,Ebs={DeleteOnTermination=true,SnapshotId=snap-05ddc125d72e3592d,VolumeSize=8,VolumeType=\"io1\",Iops=1000}'"
+    # file://${label}/mapping.json
+    echo --block-device-mappings "'DeviceName=/dev/sda1,VirtualName=/dev/xvdc,Ebs={DeleteOnTermination=true,VolumeSize=8,VolumeType=io1,Iops=1000}'"
+    ;;
+  r4.8xlarge)
+    # r4.8xlarge + in-memory docker
+    ;;
+  c3.8xlarge)
+    # c3.8xlarge + instance store SSD
+    echo --block-device-mappings "NoDevice=\"\""
+    ;;
+  esac
 }
 
 die() {
@@ -66,11 +89,13 @@ die() {
 make_cohort() {
   cohort_size="$1"
   label="$2"
+  instance_type="$3"
 
-  make_multipart "$label"
+  make_multipart "$label" "$instance_type"
 
   for i in $(seq 1 $cohort_size); do
-    run_instances_cmd="$(run_instances "$label")"
+    run_instances_cmd="$(run_instances "$label" "$instance_type")"
+    echo "$run_instances_cmd"
     result="$(echo "$run_instances_cmd" | bash)"
     instance_ip=$(echo "$result" | jq .Instances[].NetworkInterfaces[].PrivateIpAddresses[].PrivateIpAddress | tr -d '"')
     instance_id=$(echo "$result" | jq .Instances[].InstanceId | tr -d '"')
@@ -89,7 +114,7 @@ wait_for_cohort_running() {
   count="$1"
   label="$2"
   while true; do
-    num=$(echo "$(all_ids "$label")" | wc -l)
+    num=$(echo "$(all_ids "$label")" | wc -w)
     [ "$num" -ge "$count" ] && break
     echo "have $num instances online, want $count, sleeping 5"
     sleep 5
@@ -152,7 +177,7 @@ all_ids() {
     --output json |
     jq '.[].id' | tr -d '"' | sort)
 
-  echo "$ids"
+  echo "$ids" | tee -a all_ids.asdfasdf
 }
 
 run_listener() {
@@ -163,11 +188,16 @@ run_listener() {
 main() {
   count="$1"
   label="$2"
+  instance_type="$3"
+  : "${instance_type:=c3.2xlarge}"
+
+
   [ -z "$label" ] && die "Please provide a label for this test, corresponding to a directory containing LABEL/cloud-init.sh and LABEL/cloud-config.yml."
   [ ! -d "$label" ] && die "Directory $label not found."
   [ -z "$count" ] && die "Please provide a count of instances to create."
+  [ -z "$instance_type" ] && die "Please provide an instance type as a third argument"
 
-  make_cohort "$count" "$label"
+  #make_cohort "$count" "$label" "$instance_type"
   wait_for_cohort_running "$count" "$label"
   wait_for_cohort_provisioned "$count" "$label"
   #run_listener
