@@ -14,5 +14,5 @@ This will:
 ## To do
 
 - finish `listener.py`
-- modify to use `docker load` (or import or whatever) instead of `docker pull`
+- modify to use `docker import` (or load or whatever) instead of `docker pull`
 - modify to use other graph drivers

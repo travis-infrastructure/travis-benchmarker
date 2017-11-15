@@ -10,6 +10,7 @@ __extra() {
   # Remove 'set -o errexit' from /var/tmp/travis-run.d/travis-worker-prestart-hook
   sed -i 's/set -o errexit//g' "${run_d}/travis-worker-prestart-hook"
   sed -i 's/builds.ec2/builds.fake/' "/etc/default/travis-worker"
+  sed -i 's@export TRAVIS_WORKER_PRESTART_HOOK="/var/tmp/travis-run.d/travis-worker-prestart-hook"@export TRAVIS_WORKER_PRESTART_HOOK="/var/tmp/travis-run.d/travis-worker-prestart-hook-docker-import"@' /etc/default/travis-worker-cloud-init
 }
 
 __uptime_in_secs() {

@@ -30,8 +30,6 @@ EOF
 
   dest="${label}/user-data.${label}.multipart"
   echo "$HEADER" >"$dest"
-  #content="$(cat prestart-hooks/docker-import.sh | base64)"
-  #cat "${label}/cloud-config.yml" | sed 's/@@DOCKERLOAD@@/'$content'/g' >>"$dest"
   cat "${label}/cloud-config.yml" >>"$dest"
 
   echo "$BOUNDARY" >>"$dest"
