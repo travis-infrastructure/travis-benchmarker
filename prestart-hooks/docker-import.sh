@@ -41,6 +41,8 @@ main() {
     let i+=10
   done
 
+  apt install -y lzop
+
   __docker_import_tag "$TRAVIS_WORKER_DOCKER_IMAGE_ANDROID" travis:android
   __docker_import_tag "$TRAVIS_WORKER_DOCKER_IMAGE_DEFAULT" travis:default
   __docker_import_tag "$TRAVIS_WORKER_DOCKER_IMAGE_ERLANG" travis:erlang
@@ -71,7 +73,7 @@ __docker_import_tag() {
   }
 
   if ! docker inspect "$image" >/dev/null; then
-    curl "http://aj-benchmark.s3.amazonaws.com/${image}.tar" | docker import - "${image}"
+    curl "http://aj-benchmark.s3.amazonaws.com/${image}.tar.lzo" | lzop -d | docker import --message "New image imported from s3" - "${image}"
   fi
   docker tag "${image}" "${tag}"
 }
