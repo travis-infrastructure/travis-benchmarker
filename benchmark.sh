@@ -31,6 +31,8 @@ EOF
   dest="${label}/user-data.${label}.multipart"
   echo "$HEADER" >"$dest"
   cat "${label}/cloud-config.yml" >>"$dest"
+  # Append our extra prestart-hook-docker-load bits
+  echo "  content: '$(cat prestart-hooks/docker-import.sh | base64 -w 0)'" >>"$dest"
 
   echo "$BOUNDARY" >>"$dest"
   cat "${label}/cloud-init.sh" >>"$dest"

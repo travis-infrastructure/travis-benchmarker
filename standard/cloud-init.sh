@@ -9,6 +9,7 @@ __extra() {
   run_d="$1"
   # Remove 'set -o errexit' from /var/tmp/travis-run.d/travis-worker-prestart-hook
   sed -i 's/set -o errexit//g' "${run_d}/travis-worker-prestart-hook"
+  sed -i 's/set -o errexit//g' "${run_d}/travis-worker-prestart-hook-docker-import"
   sed -i 's/builds.ec2/builds.fake/' "/etc/default/travis-worker"
   sed -i 's@export TRAVIS_WORKER_PRESTART_HOOK="/var/tmp/travis-run.d/travis-worker-prestart-hook"@export TRAVIS_WORKER_PRESTART_HOOK="/var/tmp/travis-run.d/travis-worker-prestart-hook-docker-import"@' /etc/default/travis-worker-cloud-init
 }
@@ -28,7 +29,7 @@ __prestart_hook() {
 
 __make_metadata(){
   instance_type="$(curl http://169.254.169.254/latest/meta-data/instance-type)"
-  metadata='{"instance_type": '\"$instance_type\"',"docker_method":'$(cat /tmp/benchmark-docker-method)'}'
+  metadata='{"instance_type":'\"$instance_type\"',"docker_method":'\"$(cat /tmp/benchmark-docker-method)\"'}'
   echo "$metadata"
 }
 

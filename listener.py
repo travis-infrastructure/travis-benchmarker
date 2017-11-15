@@ -6,7 +6,10 @@ app = Flask(__name__)
 @app.route("/", methods=['GET', 'POST'])
 def hello():
     if request.method == 'POST':
-        data = json.loads(request.data)
+        try:
+            data = json.loads(request.data)
+        except ValueError as e:
+            from IPython import embed; embed()
         write_results(data)
     return "Recorded: {}\n".format(data)
 
