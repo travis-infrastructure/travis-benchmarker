@@ -22,7 +22,7 @@ def write_results(new):
         existing[instance_id] = new
 
     with open("results.json", "w") as f:
-        f.write(json.dumps(existing, indent=4))
+        f.write(json.dumps(existing, indent=4, sort_keys=True))
 
 def setup(results_filename="results.json"):
     if not os.path.isfile(results_filename):

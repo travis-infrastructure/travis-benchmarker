@@ -9,6 +9,7 @@ __extra() {
   run_d="$1"
   # Remove 'set -o errexit' from /var/tmp/travis-run.d/travis-worker-prestart-hook
   sed -i 's/set -o errexit//g' "${run_d}/travis-worker-prestart-hook"
+  sed -i 's/builds.ec2/builds.fake/' "/etc/default/travis-worker"
 }
 
 __uptime_in_secs() {
@@ -20,12 +21,13 @@ __prestart_hook() {
   TIME_FORMAT="-f %E\t%C"
   TIME_ARGS="--output=/tmp/stopwatch"
   source /etc/default/travis-worker-cloud-init
-  $TIME --append $TIME_ARGS $TIME_FORMAT /var/tmp/travis-run.d/travis-worker-prestart-hook
+  #$TIME --append $TIME_ARGS $TIME_FORMAT /var/tmp/travis-run.d/travis-worker-prestart-hook
+  $TIME --append $TIME_ARGS $TIME_FORMAT /var/tmp/travis-run.d/travis-worker-prestart-hook-docker-import
 }
 
 __make_metadata(){
   instance_type="$(curl http://169.254.169.254/latest/meta-data/instance-type)"
-  metadata='{"instance_type": '\"$instance_type\"'}'
+  metadata='{"instance_type": '\"$instance_type\"',"docker_method":'$(cat /tmp/benchmark-docker-method)'}'
   echo "$metadata"
 }
 
@@ -45,7 +47,7 @@ __post_to_ngrok() {
 }
 
 main() {
-  __mark "cloud-init-start"
+  __mark "cloud-init-0-start"
   TIME=/usr/bin/time
   TIME_FORMAT="-f %E\t%C"
   TIME_ARGS="--output=/tmp/stopwatch"
@@ -94,10 +96,10 @@ main() {
     iptables -I DOCKER -s "${ipv4}" -j DROP || true
   done
 
-  __mark "prestart-hook-start"
+  __mark "prestart-hook-0-start"
   __prestart_hook
-  __mark "prestart-hook-finish"
-  __mark "cloud-init-finish"
+  __mark "prestart-hook-1-finish"
+  __mark "cloud-init-1-finish"
 }
 
 __wait_for_docker() {

@@ -2,6 +2,7 @@
 
 make_multipart() {
   label="$1"
+  instance_type="$2"
 
   read -r -d '' HEADER <<-EOF
 Content-Type: multipart/mixed; boundary="MIMEBOUNDARY"
@@ -29,10 +30,13 @@ EOF
 
   dest="${label}/user-data.${label}.multipart"
   echo "$HEADER" >"$dest"
+  #content="$(cat prestart-hooks/docker-import.sh | base64)"
+  #cat "${label}/cloud-config.yml" | sed 's/@@DOCKERLOAD@@/'$content'/g' >>"$dest"
   cat "${label}/cloud-config.yml" >>"$dest"
+
   echo "$BOUNDARY" >>"$dest"
-  # FIXME: add extra stuff here
   cat "${label}/cloud-init.sh" >>"$dest"
+  # FIXME: add extra stuff here?
   echo "$FOOTER" >>"$dest"
 
   gzip -f "$dest"
@@ -43,9 +47,9 @@ make_token() {
 }
 
 run_instances() {
-  # This can be gp2 for General Purpose SSD, io1 for Provisioned IOPS SSD, st1 for Throughput Optimized HDD, sc1 for Cold HDD, or standard for Magnetic volumes.
   label="$1"
   instance_type="$2"
+  # This can be gp2 for General Purpose SSD, io1 for Provisioned IOPS SSD, st1 for Throughput Optimized HDD, sc1 for Cold HDD, or standard for Magnetic volumes.
   # subnet-2e369b67 => us-east-1b
   # subnet-addd3791 => us-east-1e (io1 not supported in this AZ)
 
@@ -57,22 +61,27 @@ run_instances() {
     --instance-type "$instance_type" \
     --security-group-ids "sg-4e80c734" "sg-4d80c737" \
     --subnet-id subnet-2e369b67 \
-    --tag-specifications '"ResourceType=instance,Tags=[{Key=role,Value=aj-test},{Key=label,Value='$label'}]"' \
+    --tag-specifications '"ResourceType=instance,Tags=[{Key=role,Value=aj-test},{Key=label,Value='$label'},{Key=instance_type,Value='$instance_type'}]"' \
     --client-token "$(make_token)" \
     --user-data 'fileb://'${label}'/user-data.'${label}'.multipart.gz '
 
+  # Note: --block-device-mappings can also be provided as a file, e.g. file://${label}/mapping.json
+  # To override the AMI default, use "NoDevice="
   case "$instance_type" in
-  c5.9xlarge)
-    # c5.9xlarge + ebs io1 volume
-    #echo --block-device-mappings "'DeviceName=/dev/sda1,VirtualName=/dev/xvdc,Ebs={DeleteOnTermination=true,SnapshotId=snap-05ddc125d72e3592d,VolumeSize=8,VolumeType=\"io1\",Iops=1000}'"
-    # file://${label}/mapping.json
-    echo --block-device-mappings "'DeviceName=/dev/sda1,VirtualName=/dev/xvdc,Ebs={DeleteOnTermination=true,VolumeSize=8,VolumeType=io1,Iops=1000}'"
-    ;;
-  r4.8xlarge)
-    # r4.8xlarge + in-memory docker
+  c3.2xlarge)
     ;;
   c3.8xlarge)
     # c3.8xlarge + instance store SSD
+    echo --block-device-mappings "NoDevice=\"\""
+    ;;
+  c5.9xlarge)
+    # c5.9xlarge + ebs io1 volume
+    #echo --block-device-mappings "'DeviceName=/dev/sda1,VirtualName=/dev/xvdc,Ebs={DeleteOnTermination=true,SnapshotId=snap-05ddc125d72e3592d,VolumeSize=8,VolumeType=\"io1\",Iops=1000}'"
+    echo --block-device-mappings "'DeviceName=/dev/sda1,VirtualName=/dev/xvdc,Ebs={DeleteOnTermination=true,VolumeSize=8,VolumeType=io1,Iops=100}'"
+    # TODO: update docker-daemon.json because "Device /dev/xvdc not found"
+    ;;
+  r4.8xlarge)
+    # r4.8xlarge + in-memory docker
     echo --block-device-mappings "NoDevice=\"\""
     ;;
   esac
@@ -116,7 +125,7 @@ wait_for_cohort_running() {
   while true; do
     num=$(echo "$(all_ids "$label")" | wc -w)
     [ "$num" -ge "$count" ] && break
-    echo "have $num instances online, want $count, sleeping 5"
+    echo "have $num instances online, want $count, sleeping 10"
     sleep 5
   done
 }
@@ -170,9 +179,11 @@ time_since_launch() {
 
 all_ids() {
   label="$1"
+  instance_type="$2"
   ids=$(aws ec2 describe-instances --filters "Name=tag:role,Values=aj-test" \
     'Name=instance-state-name,Values=running' \
     "Name=tag:label,Values=$label" \
+    "Name=tag:instance_type,Values=$instance_type" \
     --query 'Reservations[].Instances[?LaunchTime>=`2017-10-10`][].{id: InstanceId, launched: LaunchTime, ip: PrivateIpAddress}' \
     --output json |
     jq '.[].id' | tr -d '"' | sort)
@@ -180,16 +191,10 @@ all_ids() {
   echo "$ids" | tee -a all_ids.asdfasdf
 }
 
-run_listener() {
-    python listener.py
-    ngrok http 5000 --subdomain soulshake.ngrok.io
-}
-
 main() {
   count="$1"
   label="$2"
   instance_type="$3"
-  : "${instance_type:=c3.2xlarge}"
 
 
   [ -z "$label" ] && die "Please provide a label for this test, corresponding to a directory containing LABEL/cloud-init.sh and LABEL/cloud-config.yml."
@@ -197,10 +202,9 @@ main() {
   [ -z "$count" ] && die "Please provide a count of instances to create."
   [ -z "$instance_type" ] && die "Please provide an instance type as a third argument"
 
-  #make_cohort "$count" "$label" "$instance_type"
+  make_cohort "$count" "$label" "$instance_type"
   wait_for_cohort_running "$count" "$label"
   wait_for_cohort_provisioned "$count" "$label"
-  #run_listener
 }
 
 main "$@"
