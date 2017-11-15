@@ -113,89 +113,10 @@ make_cohort() {
   done
 }
 
-get_instance_log() {
-  instance_id="$1"
-  aws ec2 get-console-output --instance-id "$instance_id" | jq '.Output' -r
-}
-
-wait_for_cohort_running() {
-  echo "Waiting for cohort to be running"
-  count="$1"
-  label="$2"
-  while true; do
-    num=$(echo "$(all_ids "$label")" | wc -w)
-    [ "$num" -ge "$count" ] && break
-    echo "have $num instances online, want $count, sleeping 10"
-    sleep 5
-  done
-}
-
-vm_is_provisioned() {
-  instance_id="$1"
-  sentinel="d4041f41adcc: Pull complete"
-  if [[ "$(get_instance_log "$instance_id")" == *"$sentinel"* ]]; then
-    return 0
-  fi
-  return 1
-}
-
-wait_for_cohort_provisioned() {
-  count="$1"
-  label="$2"
-  ids="$(all_ids "$label")"
-  echo "Waiting for $count $label instances to be provisioned..."
-
-  done=""
-  done_count=0
-  while true; do
-    for iid in $ids; do
-      [[ "$done" == *"$iid"* ]] && continue
-
-      if vm_is_provisioned "$iid"; then
-        echo "$iid is done! $(time_since_launch "$iid") since launch"
-        done="$done $iid"
-        done_count=$((done_count + 1))
-      else
-        echo "$iid not done yet"
-      fi
-    done
-
-    [ "$done_count" -ge "$count" ] && break
-
-    echo "Have $done_count provisioned, want $count, sleeping 5 (elapsed: $(date -d@$SECONDS -u +%H:%M:%S))"
-    sleep 5
-  done
-
-  echo "Done!"
-}
-
-time_since_launch() {
-  instance_id="$1"
-  now=$(date "+%s")
-  launch_time="$(aws ec2 describe-instances --instance-id "$instance_id" | jq .Reservations[].Instances[].LaunchTime | tr -d '"')"
-  result=$(($now - $(date --date="$launch_time" "+%s")))
-  echo "$(date -d@$result -u +%H:%M:%S)"
-}
-
-all_ids() {
-  label="$1"
-  instance_type="$2"
-  ids=$(aws ec2 describe-instances --filters "Name=tag:role,Values=aj-test" \
-    'Name=instance-state-name,Values=running' \
-    "Name=tag:label,Values=$label" \
-    "Name=tag:instance_type,Values=$instance_type" \
-    --query 'Reservations[].Instances[?LaunchTime>=`2017-10-10`][].{id: InstanceId, launched: LaunchTime, ip: PrivateIpAddress}' \
-    --output json |
-    jq '.[].id' | tr -d '"' | sort)
-
-  echo "$ids" | tee -a all_ids.asdfasdf
-}
-
 main() {
   count="$1"
   label="$2"
   instance_type="$3"
-
 
   [ -z "$label" ] && die "Please provide a label for this test, corresponding to a directory containing LABEL/cloud-init.sh and LABEL/cloud-config.yml."
   [ ! -d "$label" ] && die "Directory $label not found."
@@ -203,8 +124,6 @@ main() {
   [ -z "$instance_type" ] && die "Please provide an instance type as a third argument"
 
   make_cohort "$count" "$label" "$instance_type"
-  wait_for_cohort_running "$count" "$label"
-  wait_for_cohort_provisioned "$count" "$label"
 }
 
 main "$@"
