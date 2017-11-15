@@ -4,7 +4,7 @@
 #!/usr/bin/env bash
 # vim:filetype=sh
 #set -o errexit
-echo "import" > /tmp/benchmark-docker-method
+echo "import" >/tmp/benchmark-docker-method
 
 main() {
   : "${RUNDIR:=/var/tmp/travis-run.d}"
@@ -106,4 +106,3 @@ __docker_pull_tag() {
 }
 
 main "$@"
-
