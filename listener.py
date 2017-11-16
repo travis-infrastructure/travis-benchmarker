@@ -1,6 +1,10 @@
 from flask import Flask, request
 import json
 import os
+from tabulate import tabulate
+import sys
+from collections import OrderedDict
+
 app = Flask(__name__)
 
 @app.route("/", methods=['GET', 'POST'])
@@ -11,12 +15,22 @@ def hello():
         except ValueError as e:
             from IPython import embed; embed()
         write_results(data)
-    return "Recorded: {}\n".format(data)
+        return "Recorded: {}\n".format(data)
 
-def write_results(new):
+    if request.method == 'GET':
+        data = read_results()
+        #from IPython import embed; embed()
+        if "table" in request.environ['CONTENT_TYPE']:
+            return display_table()
+        return json.dumps(data)
+
+def read_results():
     with open("results.json", "r") as f:
         existing = f.read()
-    existing = json.loads(existing)
+    return json.loads(existing)
+
+def write_results(new):
+    existing = read_results()
 
     instance_id = new.pop("instance_id")
     if instance_id in existing:
@@ -32,6 +46,25 @@ def setup(results_filename="results.json"):
         with open(results_filename, "a") as f:
             f.write("{}")
 
+def display_table():
+    data = read_results()
+    rows = []
+    for iid in data:
+        row = OrderedDict()
+        row["Instance ID"] = iid
+        row["instance_ipv4"] = ""
+        row["mem"] = ""
+        row["method"], row["total"] = "", ""
+        row["instance_type"] = ""
+        row["prestart-hook-0-start"], row["prestart-hook-1-finish"] = "", ""
+        row["cloud-init-0-start"], row["cloud-init-1-finish"] = "", ""
+        row.update(data[iid])
+        rows.append(row)
+    return tabulate(rows, headers='keys')
+
 if __name__ == "__main__":
     setup()
+    if "--show" in sys.argv:
+        print(display_table())
+        exit()
     app.run(debug=True)

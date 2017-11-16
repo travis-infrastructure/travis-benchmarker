@@ -3,6 +3,7 @@
 make_multipart() {
   label="$1"
   instance_type="$2"
+  docker_method="$3"
 
   read -r -d '' HEADER <<-EOF
 Content-Type: multipart/mixed; boundary="MIMEBOUNDARY"
@@ -28,32 +29,45 @@ EOF
 --MIMEBOUNDARY--
 EOF
 
-  dest="${label}/user-data.${label}.multipart"
-  echo "$HEADER" >"$dest"
-  cat "${label}/cloud-config.yml" >>"$dest"
-  # Append our extra prestart-hook-docker-load bits
-  echo "  content: '$(cat prestart-hooks/docker-import.sh | base64 -w 0)'" >>"$dest"
+  dest="$(make_multipart_dest "$label")"
 
+  ##################
+  ### cloud-init ###
+  ##################
+  echo "$HEADER" >"$dest"
+  sed "s@__DOCKER_IMPORT__@$(base64 prestart-hooks/docker-import.sh -w 0)@; \
+    s@__DOCKER_PULL__@$(base64 prestart-hooks/docker-pull.sh -w 0)@" \
+    "${label}/cloud-config.yml" \
+    >>"$dest"
+
+  ####################
+  ### cloud-config ###
+  ####################
   echo "$BOUNDARY" >>"$dest"
-  cat "${label}/cloud-init.sh" >>"$dest"
-  # FIXME: add extra stuff here?
+  sed "s@__DOCKER_METHOD__@export DOCKER_METHOD='$docker_method'@" \
+    "${label}/cloud-init.sh" \
+    >>"$dest"
   echo "$FOOTER" >>"$dest"
 
   gzip -f "$dest"
 }
 
-make_token() {
-  cat /proc/sys/kernel/random/uuid
+make_multipart_dest() {
+  label="$1"
+  dest="${label}/user-data.${label}.multipart"
+  echo "$dest"
 }
 
 run_instances() {
   label="$1"
   instance_type="$2"
+  docker_method="$3"
   # This can be gp2 for General Purpose SSD, io1 for Provisioned IOPS SSD, st1 for Throughput Optimized HDD, sc1 for Cold HDD, or standard for Magnetic volumes.
   # subnet-2e369b67 => us-east-1b
   # subnet-addd3791 => us-east-1e (io1 not supported in this AZ)
 
-  echo -n aws ec2 run-instances \
+  dest="$(make_multipart_dest "$label").gz"
+  cmd="echo -n aws ec2 run-instances \
     --region us-east-1 \
     --placement 'AvailabilityZone=us-east-1b' \
     --key-name aj \
@@ -61,9 +75,9 @@ run_instances() {
     --instance-type "$instance_type" \
     --security-group-ids "sg-4e80c734" "sg-4d80c737" \
     --subnet-id subnet-2e369b67 \
-    --tag-specifications '"ResourceType=instance,Tags=[{Key=role,Value=aj-test},{Key=label,Value='$label'},{Key=instance_type,Value='$instance_type'}]"' \
-    --client-token "$(make_token)" \
-    --user-data 'fileb://'${label}'/user-data.'${label}'.multipart.gz '
+    --tag-specifications '\"ResourceType=instance,Tags=[{Key=role,Value=aj-test},{Key=label,Value="$label"},{Key=instance_type,Value="$instance_type"},{Key=docker_method,Value="$docker_method"}]\"' \
+    --client-token '$(cat /proc/sys/kernel/random/uuid)' \
+    --user-data 'fileb://'$(make_multipart_dest "$label")'.gz '"
 
   # Note: --block-device-mappings can also be provided as a file, e.g. file://${label}/mapping.json
   # To override the AMI default, use "NoDevice="
@@ -72,7 +86,7 @@ run_instances() {
     ;;
   c3.8xlarge)
     # c3.8xlarge + instance store SSD
-    echo --block-device-mappings "NoDevice=\"\""
+    cmd="$cmd --block-device-mappings "NoDevice='""'""
     ;;
   c5.9xlarge)
     # c5.9xlarge + ebs io1 volume
@@ -84,14 +98,24 @@ run_instances() {
     # r4.8xlarge + in-memory docker
     echo --block-device-mappings "NoDevice=\"\""
     ;;
+  *)
+    die "Unknown instance type $instance_type"
+    ;;
   esac
+  eval "$cmd"
+}
+
+stderr_echo() {
+  >&2 echo "$@"
 }
 
 die() {
-  usage="$0 LABEL COUNT"
-  echo "$@"
-  echo "USAGE: "
-  echo "  $usage"
+  usage="$0 COUNT LABEL INSTANCE_TYPE"
+  stderr_echo
+  stderr_echo "USAGE: "
+  stderr_echo "  $usage"
+  stderr_echo
+  stderr_echo "$(tput setaf 1) $* $(tput sgr0)"
   exit 1
 }
 
@@ -99,11 +123,12 @@ make_cohort() {
   cohort_size="$1"
   label="$2"
   instance_type="$3"
+  docker_method="$4"
 
-  make_multipart "$label" "$instance_type"
+  make_multipart "$label" "$instance_type" "$docker_method"
 
-  for i in $(seq 1 $cohort_size); do
-    run_instances_cmd="$(run_instances "$label" "$instance_type")"
+  for _ in $(seq 1 "$cohort_size"); do
+    run_instances_cmd="$(run_instances "$label" "$instance_type" "$docker_method")"
     echo "$run_instances_cmd"
     result="$(echo "$run_instances_cmd" | bash)"
     instance_ip=$(echo "$result" | jq .Instances[].NetworkInterfaces[].PrivateIpAddresses[].PrivateIpAddress | tr -d '"')
@@ -117,13 +142,15 @@ main() {
   count="$1"
   label="$2"
   instance_type="$3"
+  docker_method="$4"
 
   [ -z "$label" ] && die "Please provide a label for this test, corresponding to a directory containing LABEL/cloud-init.sh and LABEL/cloud-config.yml."
   [ ! -d "$label" ] && die "Directory $label not found."
   [ -z "$count" ] && die "Please provide a count of instances to create."
   [ -z "$instance_type" ] && die "Please provide an instance type as a third argument"
+  [ -z "$docker_method" ] && die "Please provide docker method (pull, import) as fourth rgument"
 
-  make_cohort "$count" "$label" "$instance_type"
+  make_cohort "$count" "$label" "$instance_type" "$docker_method"
 }
 
 main "$@"

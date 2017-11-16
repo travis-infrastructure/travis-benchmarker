@@ -4,6 +4,7 @@
 #!/usr/bin/env bash
 # vim:filetype=sh
 #set -o errexit
+set -x
 echo "import" >/tmp/benchmark-docker-method
 
 main() {
@@ -41,7 +42,8 @@ main() {
     let i+=10
   done
 
-  apt install -y lzop
+  echo "WHOAMI: $(whoami)"
+  [ -z "$TRAVIS_WORKER_DOCKER_IMAGE_ANDROID" ] && echo "NEEDED TO SOURCE!" && source /etc/default/travis-worker-cloud-init
 
   __docker_import_tag "$TRAVIS_WORKER_DOCKER_IMAGE_ANDROID" travis:android
   __docker_import_tag "$TRAVIS_WORKER_DOCKER_IMAGE_DEFAULT" travis:default
@@ -72,7 +74,8 @@ __docker_import_tag() {
     return 1
   }
 
-  if ! docker inspect "$image" >/dev/null; then
+  set -o pipefail
+  if ! docker inspect "$image" &>/dev/null; then
     curl "http://aj-benchmark.s3.amazonaws.com/${image}.tar.lzo" | lzop -d | docker import --message "New image imported from s3" - "${image}"
   fi
   docker tag "${image}" "${tag}"
@@ -89,7 +92,8 @@ __docker_upload_tag() {
   CID=$(docker run -d "${image}" true)
   docker export "$CID" -o export.tar
   docker rm "$CID"
-  aws s3 cp "export.tar" "s3://aj-benchmark/${image}.tar"
+  lzop -9 export.tar -o export.tar.lzo
+  aws s3 cp "export.tar.lzo" "s3://aj-benchmark/${image}.tar"
 }
 
 __docker_pull_tag() {

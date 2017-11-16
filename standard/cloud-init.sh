@@ -7,11 +7,15 @@ shopt -s nullglob
 
 __extra() {
   run_d="$1"
-  # Remove 'set -o errexit' from /var/tmp/travis-run.d/travis-worker-prestart-hook
+  # Remove 'set -o errexit' so we can see if something goes wrong
   sed -i 's/set -o errexit//g' "${run_d}/travis-worker-prestart-hook"
   sed -i 's/set -o errexit//g' "${run_d}/travis-worker-prestart-hook-docker-import"
+
+  # Use a fake queue
   sed -i 's/builds.ec2/builds.fake/' "/etc/default/travis-worker"
-  sed -i 's@export TRAVIS_WORKER_PRESTART_HOOK="/var/tmp/travis-run.d/travis-worker-prestart-hook"@export TRAVIS_WORKER_PRESTART_HOOK="/var/tmp/travis-run.d/travis-worker-prestart-hook-docker-import"@' /etc/default/travis-worker-cloud-init
+
+  # Specify prestart hook here
+  #sed -i 's@export TRAVIS_WORKER_PRESTART_HOOK="/var/tmp/travis-run.d/travis-worker-prestart-hook"@export TRAVIS_WORKER_PRESTART_HOOK="/var/tmp/travis-run.d/travis-worker-prestart-hook-docker-import"@' /etc/default/travis-worker-cloud-init
 }
 
 __uptime_in_secs() {
@@ -22,15 +26,19 @@ __prestart_hook() {
   TIME=/usr/bin/time
   TIME_FORMAT="-f %E\t%C"
   TIME_ARGS="--output=/tmp/stopwatch"
-  source /etc/default/travis-worker-cloud-init
-  #$TIME --append $TIME_ARGS $TIME_FORMAT /var/tmp/travis-run.d/travis-worker-prestart-hook
-  $TIME --append $TIME_ARGS $TIME_FORMAT /var/tmp/travis-run.d/travis-worker-prestart-hook-docker-import
-}
 
-__make_metadata(){
-  instance_type="$(curl http://169.254.169.254/latest/meta-data/instance-type)"
-  metadata='{"instance_type":'\"$instance_type\"',"docker_method":'\"$(cat /tmp/benchmark-docker-method)\"'}'
-  echo "$metadata"
+  if [[ "$DOCKER_METHOD" == "pull" ]]; then
+    logger "DOCKER_METHOD IS PULL"
+    $TIME --append $TIME_ARGS $TIME_FORMAT /var/tmp/travis-run.d/travis-worker-prestart-hook
+  elif [[ "$DOCKER_METHOD" == "import" ]]; then
+    #source 
+    logger "DOCKER_METHOD IS IMPORT"
+    sed -i sed 's@TRAVIS_WORKER_PRESTART_HOOK.*@export TRAVIS_WORKER_PRESTART_HOOK="/var/tmp/travis-run.d/travis-worker-prestart-hook"@' /etc/default/travis-worker-cloud-init
+    apt install -y lzop
+    $TIME --append $TIME_ARGS $TIME_FORMAT /var/tmp/travis-run.d/travis-worker-prestart-hook-docker-import
+  else
+    logger "DOCKER_METHOD IS UNKNOWN!!!!!!!!!"
+  fi
 }
 
 __mark() {
@@ -38,8 +46,18 @@ __mark() {
   : "${RUNDIR:=/var/tmp/travis-run.d}"
 
   instance_id="$(cat "${RUNDIR}/instance-id")"
+  instance_type="$(curl http://169.254.169.254/latest/meta-data/instance-type)"
+  instance_ipv4="$(curl http://169.254.169.254/latest/meta-data/local-ipv4)"
+  docker_method="$(cat /tmp/benchmark-docker-method)"
+  graphdriver="$(docker info --format '{{ json .Driver }}' | tr -d '"')"
+  filesystem="$(docker info --format '{{ index .DriverStatus 3 }}')"
+  total_time="$(tail -n1 /tmp/stopwatch | awk '{print $1}')"
+  mem_total="$(free -hm | grep ^Mem: | awk '{print $2}')"
+
   now="$(__uptime_in_secs)"
-  data='{"instance_id":'\"$instance_id\"','\"$action\"':'$now',"metadata":'$(__make_metadata)'}'
+  data='{"instance_id":'\"$instance_id\"',"instance_ipv4":'\"$instance_ipv4\"','\"$action\"':'$now',"method":'\"$docker_method\"','
+  data=''$data'"instance_type":'\"$instance_type\"',"graphdriver":'\"$graphdriver\"','
+  data=''$data'"filesystem":'\"$filesystem\"',"total":'\"$total_time\"',"mem":'\"$mem_total\"'}'
 
   __post_to_ngrok "$data"
 }
@@ -98,9 +116,7 @@ main() {
     iptables -I DOCKER -s "${ipv4}" -j DROP || true
   done
 
-  __mark "prestart-hook-0-start"
   __prestart_hook
-  __mark "prestart-hook-1-finish"
   __mark "cloud-init-1-finish"
 }
 
@@ -124,5 +140,7 @@ __set_aio_max_nr() {
   # which is one power higher than the default of 16^4 :sparkles:.
   sysctl -w fs.aio-max-nr=1048576
 }
+
+__DOCKER_METHOD__
 
 main "$@"
