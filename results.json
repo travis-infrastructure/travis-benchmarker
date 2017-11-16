@@ -1,0 +1,86 @@
+{
+    "i-0370d1c85c4c082be": {
+        "cloud-init-finish": 827, 
+        "cloud-init-start": 14, 
+        "prestart-hook-finish": 827, 
+        "prestart-hook-start": 33
+    }, 
+    "i-06d667690559f33d7": {
+        "cloud-init-finish": 865, 
+        "cloud-init-start": 15, 
+        "prestart-hook-finish": 864, 
+        "prestart-hook-start": 32
+    }, 
+    "i-07be892f2806fedd0": {
+        "cloud-init-0-start": 15, 
+        "metadata": {
+            "docker_method": "import", 
+            "instance_type": "c3.2xlarge"
+        }, 
+        "prestart-hook-0-start": 28
+    }, 
+    "i-092917f7e9e2aeaa5": {
+        "cloud-init-0-start": 13, 
+        "cloud-init-1-finish": 26, 
+        "metadata": {
+            "instance_type": "c3.2xlarge"
+        }, 
+        "prestart-hook-0-start": 26, 
+        "prestart-hook-1-finish": 26
+    }, 
+    "i-0a1f1fa8130fc4dcb": {
+        "cloud-init-0-start": 11, 
+        "cloud-init-1-finish": 960, 
+        "metadata": {
+            "docker_method": "import", 
+            "instance_type": "c3.2xlarge"
+        }, 
+        "prestart-hook-0-start": 23, 
+        "prestart-hook-1-finish": 959
+    }, 
+    "i-0b194190d6cdcf444": {
+        "cloud-init-finish": 541, 
+        "cloud-init-start": 16, 
+        "prestart-hook-finish": 541, 
+        "prestart-hook-start": 33
+    }, 
+    "i-0b27564b3e13ce6a4": {
+        "cloud-init-0-start": 12, 
+        "cloud-init-1-finish": 26, 
+        "metadata": {
+            "docker_method": "import", 
+            "instance_type": "c3.2xlarge"
+        }, 
+        "prestart-hook-0-start": 24, 
+        "prestart-hook-1-finish": 25
+    }, 
+    "i-0b5213a88d5dcd5f0": {
+        "cloud-init-0-start": 11, 
+        "cloud-init-1-finish": 28, 
+        "metadata": {
+            "docker_method": "import", 
+            "instance_type": "c3.2xlarge"
+        }, 
+        "prestart-hook-0-start": 23, 
+        "prestart-hook-1-finish": 28
+    }, 
+    "i-0b87dc122bdfda689": {
+        "cloud-init-finish": 640, 
+        "cloud-init-start": 18, 
+        "metadata": {
+            "instance_type": "c3.8xlarge"
+        }, 
+        "prestart-hook-finish": 640, 
+        "prestart-hook-start": 36
+    }, 
+    "i-0dbb626978e3dfa08": {
+        "cloud-init-0-start": 15, 
+        "cloud-init-1-finish": 42, 
+        "metadata": {
+            "docker_method": "import", 
+            "instance_type": "c3.8xlarge"
+        }, 
+        "prestart-hook-0-start": 32, 
+        "prestart-hook-1-finish": 42
+    }
+}
