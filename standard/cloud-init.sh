@@ -26,14 +26,15 @@ __prestart_hook() {
   TIME=/usr/bin/time
   TIME_FORMAT="-f %E\t%C"
   TIME_ARGS="--output=/tmp/stopwatch"
+  source /etc/default/travis-worker-cloud-init
 
   if [[ "$DOCKER_METHOD" == "pull" ]]; then
     logger "DOCKER_METHOD IS PULL"
     $TIME --append $TIME_ARGS $TIME_FORMAT /var/tmp/travis-run.d/travis-worker-prestart-hook
   elif [[ "$DOCKER_METHOD" == "import" ]]; then
-    #source 
     logger "DOCKER_METHOD IS IMPORT"
     sed -i sed 's@TRAVIS_WORKER_PRESTART_HOOK.*@export TRAVIS_WORKER_PRESTART_HOOK="/var/tmp/travis-run.d/travis-worker-prestart-hook"@' /etc/default/travis-worker-cloud-init
+    source /etc/default/travis-worker-cloud-init
     apt install -y lzop
     $TIME --append $TIME_ARGS $TIME_FORMAT /var/tmp/travis-run.d/travis-worker-prestart-hook-docker-import
   else
@@ -53,10 +54,12 @@ __mark() {
   filesystem="$(docker info --format '{{ index .DriverStatus 3 }}')"
   total_time="$(tail -n1 /tmp/stopwatch | awk '{print $1}')"
   mem_total="$(free -hm | grep ^Mem: | awk '{print $2}')"
+  boot_time="$(cat /var/lib/cloud/data/status.json | grep start | head -n1 | awk '{print $2}' | tr -d ',')"
+  boot_time="$(date -d@$boot_time +"%m/%d %H:%M:%S")"
 
   now="$(__uptime_in_secs)"
   data='{"instance_id":'\"$instance_id\"',"instance_ipv4":'\"$instance_ipv4\"','\"$action\"':'$now',"method":'\"$docker_method\"','
-  data=''$data'"instance_type":'\"$instance_type\"',"graphdriver":'\"$graphdriver\"','
+  data=''$data'"boot_time":'\"$boot_time\"',"instance_type":'\"$instance_type\"',"graphdriver":'\"$graphdriver\"','
   data=''$data'"filesystem":'\"$filesystem\"',"total":'\"$total_time\"',"mem":'\"$mem_total\"'}'
 
   __post_to_ngrok "$data"
