@@ -45,6 +45,7 @@ main() {
 
   echo "WHOAMI: $(whoami)"
   [ -z "$TRAVIS_WORKER_DOCKER_IMAGE_ANDROID" ] && echo "NEEDED TO SOURCE!" && source /etc/default/travis-worker-cloud-init
+  sudo apt-get install -y lzop
 
   __docker_import_tag "$TRAVIS_WORKER_DOCKER_IMAGE_ANDROID" travis:android
   __docker_import_tag "$TRAVIS_WORKER_DOCKER_IMAGE_DEFAULT" travis:default

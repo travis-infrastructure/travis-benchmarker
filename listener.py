@@ -56,7 +56,6 @@ def display_table():
         row["mem"] = ""
         row["method"], row["total"] = "", ""
         row["instance_type"] = ""
-        #row["prestart-hook-0-start"], row["prestart-hook-1-finish"] = "", ""
         row["cloud-init-0-start"], row["cloud-init-1-finish"] = "", ""
         row.update(data[iid])
         rows.append(row)

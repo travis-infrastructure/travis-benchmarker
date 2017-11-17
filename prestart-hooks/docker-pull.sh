@@ -2,7 +2,6 @@
 # vim:filetype=sh
 set -o errexit
 echo "pull" > /tmp/benchmark-docker-method
-rm /var/tmp/travis-run.d/travis-worker-prestart-hook-docker-import
 
 main() {
   : "${RUNDIR:=/var/tmp/travis-run.d}"

@@ -10,12 +10,15 @@ __extra() {
   # Remove 'set -o errexit' so we can see if something goes wrong
   sed -i 's/set -o errexit//g' "${run_d}/travis-worker-prestart-hook"
   sed -i 's/set -o errexit//g' "${run_d}/travis-worker-prestart-hook-docker-import"
+  sed -i 's@@@' /usr/local/bin/travis-worker-wrapper
 
   # Use a fake queue
   sed -i 's/builds.ec2/builds.fake/' "/etc/default/travis-worker"
 
   # Specify prestart hook here
-  #sed -i 's@export TRAVIS_WORKER_PRESTART_HOOK="/var/tmp/travis-run.d/travis-worker-prestart-hook"@export TRAVIS_WORKER_PRESTART_HOOK="/var/tmp/travis-run.d/travis-worker-prestart-hook-docker-import"@' /etc/default/travis-worker-cloud-init
+  if [[ "$DOCKER_METHOD" == "import" ]]; then
+    sed -i 's@.*export TRAVIS_WORKER_PRESTART_HOOK="/var/tmp/travis-run.d/travis-worker-prestart-hook.*"@export TRAVIS_WORKER_PRESTART_HOOK="/var/tmp/travis-run.d/travis-worker-prestart-hook-docker-import"@' /etc/default/travis-worker-cloud-init
+  fi
 }
 
 __uptime_in_secs() {
@@ -33,10 +36,12 @@ __prestart_hook() {
     $TIME --append $TIME_ARGS $TIME_FORMAT /var/tmp/travis-run.d/travis-worker-prestart-hook
   elif [[ "$DOCKER_METHOD" == "import" ]]; then
     logger "DOCKER_METHOD IS IMPORT"
+    apt install -y lzop
+    # why doesn't lzop get installed :'(
+    ln -sf /var/tmp/travis-run.d/travis-worker-prestart-hook-docker-import /var/tmp/travis-run.d/travis-worker-prestart-hook
     sed -i 's@.*TRAVIS_WORKER_PRESTART_HOOK.*@export TRAVIS_WORKER_PRESTART_HOOK="/var/tmp/travis-run.d/travis-worker-prestart-hook-docker-import"@' /etc/default/travis-worker-cloud-init
     sed -i 's@.*TRAVIS_WORKER_PRESTART_HOOK.*@export TRAVIS_WORKER_PRESTART_HOOK="/var/tmp/travis-run.d/travis-worker-prestart-hook-docker-import"@' /var/tmp/travis-run.d/travis-worker.env
     source /etc/default/travis-worker-cloud-init
-    apt install -y lzop
     $TIME --append $TIME_ARGS $TIME_FORMAT /var/tmp/travis-run.d/travis-worker-prestart-hook-docker-import
   else
     logger "DOCKER_METHOD IS UNKNOWN!!!!!!!!!"
@@ -104,6 +109,8 @@ main() {
   fi
 
   service travis-worker stop || true
+  # FIXME: update /usr/local/bin/travis-worker-wrapper otherwise pulls happen
+
   $TIME --append $TIME_ARGS $TIME_FORMAT service travis-worker start || true
 
   iptables -t nat -I PREROUTING -p tcp -d '169.254.169.254' \
@@ -147,4 +154,5 @@ __set_aio_max_nr() {
 
 __DOCKER_METHOD__
 
+apt install -y lzop
 main "$@"

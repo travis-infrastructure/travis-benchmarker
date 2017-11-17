@@ -1,97 +1,97 @@
 {
-    "i-00057629a4151981f": {
-        "boot_time": "11/16 23:58:39", 
-        "cloud-init-0-start": 13, 
-        "cloud-init-1-finish": 1003, 
-        "filesystem": "[Backing Filesystem xfs]", 
-        "graphdriver": "devicemapper", 
-        "instance_ipv4": "10.10.2.163", 
-        "instance_type": "c3.2xlarge", 
-        "mem": "14G", 
-        "method": "pull", 
-        "total": "16:18.25"
-    }, 
-    "i-032b2e06dbcd4d964": {
-        "boot_time": "11/16 23:58:33", 
-        "cloud-init-0-start": 13, 
-        "cloud-init-1-finish": 966, 
-        "filesystem": "[Backing Filesystem xfs]", 
-        "graphdriver": "devicemapper", 
-        "instance_ipv4": "10.10.2.253", 
-        "instance_type": "c3.2xlarge", 
-        "mem": "14G", 
-        "method": "import", 
-        "total": "15:37.06"
-    }, 
-    "i-064f786e759d07f65": {
-        "boot_time": "11/16 23:58:45", 
-        "cloud-init-0-start": 13, 
-        "cloud-init-1-finish": 682, 
-        "filesystem": "[Backing Filesystem xfs]", 
-        "graphdriver": "devicemapper", 
-        "instance_ipv4": "10.10.2.247", 
-        "instance_type": "c3.2xlarge", 
-        "mem": "14G", 
-        "method": "pull", 
-        "total": "10:57.65"
-    }, 
-    "i-071c767d7d804831d": {
-        "boot_time": "11/16 23:58:19", 
-        "cloud-init-0-start": 13, 
-        "cloud-init-1-finish": 567, 
+    "i-04d9d723f3577cbc3": {
+        "boot_time": "11/17 02:43:38", 
+        "cloud-init-0-start": 20, 
+        "cloud-init-1-finish": 579, 
         "filesystem": "[Backing Filesystem xfs]", 
         "graphdriver": "devicemapper", 
         "instance_ipv4": "10.10.2.214", 
         "instance_type": "c3.8xlarge", 
         "mem": "58G", 
         "method": "pull", 
-        "total": "9:02.18"
+        "total": "9:06.27"
     }, 
-    "i-0807bdc8aa3e245a4": {
-        "boot_time": "11/16 23:58:23", 
-        "cloud-init-0-start": 15, 
-        "cloud-init-1-finish": 585, 
+    "i-052a891daae3742ab": {
+        "boot_time": "11/17 02:43:35", 
+        "cloud-init-0-start": 20, 
+        "cloud-init-1-finish": 544, 
         "filesystem": "[Backing Filesystem xfs]", 
         "graphdriver": "devicemapper", 
-        "instance_ipv4": "10.10.2.60", 
+        "instance_ipv4": "10.10.2.100", 
         "instance_type": "c3.8xlarge", 
         "mem": "58G", 
-        "method": "pull", 
-        "total": "9:18.28"
+        "method": "import", 
+        "total": "8:31.42"
     }, 
-    "i-088ce02a32302b775": {
-        "boot_time": "11/16 23:58:48", 
-        "cloud-init-0-start": 12, 
-        "filesystem": "", 
-        "graphdriver": "", 
-        "instance_ipv4": "10.10.2.144", 
+    "i-05f09d720661c3df3": {
+        "boot_time": "11/17 02:43:56", 
+        "cloud-init-0-start": 16, 
+        "cloud-init-1-finish": 1171, 
+        "filesystem": "[Backing Filesystem xfs]", 
+        "graphdriver": "devicemapper", 
+        "instance_ipv4": "10.10.2.244", 
         "instance_type": "c3.2xlarge", 
         "mem": "14G", 
+        "method": "import", 
+        "total": "19:02.10"
+    }, 
+    "i-0631845040b7d4d26": {
+        "boot_time": "11/17 02:43:32", 
+        "cloud-init-0-start": 19, 
+        "filesystem": "", 
+        "graphdriver": "", 
+        "instance_ipv4": "10.10.2.183", 
+        "instance_type": "c3.8xlarge", 
+        "mem": "58G", 
         "method": "", 
         "total": ""
     }, 
-    "i-08cab2bb7e7281c11": {
-        "boot_time": "11/16 23:58:30", 
+    "i-08125144b1751e9bf": {
+        "boot_time": "11/17 02:43:56", 
         "cloud-init-0-start": 16, 
-        "cloud-init-1-finish": 608, 
+        "cloud-init-1-finish": 1073, 
         "filesystem": "[Backing Filesystem xfs]", 
         "graphdriver": "devicemapper", 
-        "instance_ipv4": "10.10.2.33", 
-        "instance_type": "c3.8xlarge", 
-        "mem": "58G", 
+        "instance_ipv4": "10.10.2.142", 
+        "instance_type": "c3.2xlarge", 
+        "mem": "14G", 
         "method": "import", 
-        "total": "9:36.54"
+        "total": "17:24.27"
     }, 
-    "i-0e63164f236927798": {
-        "boot_time": "11/16 23:58:27", 
-        "cloud-init-0-start": 15, 
-        "cloud-init-1-finish": 579, 
+    "i-087427698bf9c53c9": {
+        "boot_time": "11/17 02:43:50", 
+        "cloud-init-0-start": 18, 
+        "cloud-init-1-finish": 567, 
         "filesystem": "[Backing Filesystem xfs]", 
         "graphdriver": "devicemapper", 
-        "instance_ipv4": "10.10.2.80", 
+        "instance_ipv4": "10.10.2.89", 
+        "instance_type": "c3.2xlarge", 
+        "mem": "14G", 
+        "method": "pull", 
+        "total": "8:52.70"
+    }, 
+    "i-0ae502efed361a41e": {
+        "boot_time": "11/17 02:43:40", 
+        "cloud-init-0-start": 18, 
+        "cloud-init-1-finish": 716, 
+        "filesystem": "[Backing Filesystem xfs]", 
+        "graphdriver": "devicemapper", 
+        "instance_ipv4": "10.10.2.239", 
         "instance_type": "c3.8xlarge", 
         "mem": "58G", 
-        "method": "import", 
-        "total": "9:08.31"
+        "method": "pull", 
+        "total": "11:26.24"
+    }, 
+    "i-0e247d0250ef25abb": {
+        "boot_time": "11/17 02:43:44", 
+        "cloud-init-0-start": 19, 
+        "cloud-init-1-finish": 1022, 
+        "filesystem": "[Backing Filesystem xfs]", 
+        "graphdriver": "devicemapper", 
+        "instance_ipv4": "10.10.2.8", 
+        "instance_type": "c3.2xlarge", 
+        "mem": "14G", 
+        "method": "pull", 
+        "total": "16:30.82"
     }
 }
