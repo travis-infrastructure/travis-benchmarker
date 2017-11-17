@@ -1,9 +1,9 @@
 #!/bin/bash
 
 make_multipart() {
-  label="$1"
-  instance_type="$2"
-  docker_method="$3"
+  instance_type="$1"
+  docker_method="$2"
+  label="data"
 
   read -r -d '' HEADER <<-EOF
 Content-Type: multipart/mixed; boundary="MIMEBOUNDARY"
@@ -29,14 +29,14 @@ EOF
 --MIMEBOUNDARY--
 EOF
 
-  dest="$(make_multipart_dest "$label")"
+  dest="$(make_multipart_dest)"
 
   ##################
   ### cloud-init ###
   ##################
   echo "$HEADER" >"$dest"
-  sed "s@__DOCKER_IMPORT__@$(base64 prestart-hooks/docker-import.sh -w 0)@; \
-    s@__DOCKER_PULL__@$(base64 prestart-hooks/docker-pull.sh -w 0)@" \
+  sed "s@__DOCKER_IMPORT__@$(base64 $label/prestart-hooks/docker-import.sh -w 0)@; \
+    s@__DOCKER_PULL__@$(base64 $label/prestart-hooks/docker-pull.sh -w 0)@" \
     "${label}/cloud-config.yml" \
     >>"$dest"
 
@@ -53,20 +53,20 @@ EOF
 }
 
 make_multipart_dest() {
-  label="$1"
-  dest="${label}/user-data.${label}.multipart"
+  label="data"
+  dest="${label}/user-data.multipart"
   echo "$dest"
 }
 
 run_instances() {
-  label="$1"
-  instance_type="$2"
-  docker_method="$3"
+  instance_type="$1"
+  docker_method="$2"
+  label="data"
   # This can be gp2 for General Purpose SSD, io1 for Provisioned IOPS SSD, st1 for Throughput Optimized HDD, sc1 for Cold HDD, or standard for Magnetic volumes.
   # subnet-2e369b67 => us-east-1b
   # subnet-addd3791 => us-east-1e (io1 not supported in this AZ)
 
-  dest="$(make_multipart_dest "$label").gz"
+  dest="$(make_multipart_dest).gz"
   cmd="echo -n aws ec2 run-instances \
     --region us-east-1 \
     --placement 'AvailabilityZone=us-east-1b' \
@@ -75,9 +75,9 @@ run_instances() {
     --instance-type "$instance_type" \
     --security-group-ids "sg-4e80c734" "sg-4d80c737" \
     --subnet-id subnet-2e369b67 \
-    --tag-specifications '\"ResourceType=instance,Tags=[{Key=role,Value=aj-test},{Key=label,Value="$label"},{Key=instance_type,Value="$instance_type"},{Key=docker_method,Value="$docker_method"}]\"' \
+    --tag-specifications '\"ResourceType=instance,Tags=[{Key=role,Value=aj-test},{Key=instance_type,Value="$instance_type"},{Key=docker_method,Value="$docker_method"}]\"' \
     --client-token '$(cat /proc/sys/kernel/random/uuid)' \
-    --user-data 'fileb://'$(make_multipart_dest "$label")'.gz '"
+    --user-data 'fileb://'$(make_multipart_dest)'.gz '"
 
   # Note: --block-device-mappings can also be provided as a file, e.g. file://${label}/mapping.json
   # To override the AMI default, use "NoDevice="
@@ -110,7 +110,7 @@ stderr_echo() {
 }
 
 die() {
-  usage="$0 COUNT LABEL INSTANCE_TYPE"
+  usage="$0 COUNT INSTANCE_TYPE"
   stderr_echo
   stderr_echo "USAGE: "
   stderr_echo "  $usage"
@@ -121,14 +121,14 @@ die() {
 
 make_cohort() {
   cohort_size="$1"
-  label="$2"
-  instance_type="$3"
-  docker_method="$4"
+  label="data"
+  instance_type="$2"
+  docker_method="$3"
 
-  make_multipart "$label" "$instance_type" "$docker_method"
+  make_multipart "$instance_type" "$docker_method"
 
   for _ in $(seq 1 "$cohort_size"); do
-    run_instances_cmd="$(run_instances "$label" "$instance_type" "$docker_method")"
+    run_instances_cmd="$(run_instances "$instance_type" "$docker_method")"
     echo "$run_instances_cmd"
     result="$(echo "$run_instances_cmd" | bash)"
     instance_ip=$(echo "$result" | jq .Instances[].NetworkInterfaces[].PrivateIpAddresses[].PrivateIpAddress | tr -d '"')
@@ -140,17 +140,16 @@ make_cohort() {
 
 main() {
   count="$1"
-  label="$2"
-  instance_type="$3"
-  docker_method="$4"
+  instance_type="$2"
+  docker_method="$3"
 
-  [ -z "$label" ] && die "Please provide a label for this test, corresponding to a directory containing LABEL/cloud-init.sh and LABEL/cloud-config.yml."
-  [ ! -d "$label" ] && die "Directory $label not found."
+  #[ -z "$label" ] && die "Please provide a label for this test, corresponding to a directory containing LABEL/cloud-init.sh and LABEL/cloud-config.yml."
+  #[ ! -d "$label" ] && die "Directory $label not found."
   [ -z "$count" ] && die "Please provide a count of instances to create."
   [ -z "$instance_type" ] && die "Please provide an instance type as a third argument"
   [ -z "$docker_method" ] && die "Please provide docker method (pull, import) as fourth rgument"
 
-  make_cohort "$count" "$label" "$instance_type" "$docker_method"
+  make_cohort "$count" "$instance_type" "$docker_method"
 }
 
 main "$@"

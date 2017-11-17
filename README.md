@@ -11,14 +11,14 @@ This will start a basic local webserver that will the instances will send benchm
 
 You can test the listener as follows:
 
-- `curl -H "Content-Type: application/json" -X POST -d '{"instance_id": "i-foo", "finished": "mraaa"}' http://soulshake.ngrok.io`
 - `python listener.py --show`
+- `curl -H "Content-Type: application/json" -X POST -d '{"instance_id": "i-foo", "finished": "mraaa"}' http://soulshake.ngrok.io`
 
 Note: `soulshake.ngrok.io` is currently hardcoded.
 
 ### Run the benchmark
 
-`./benchmark.sh COUNT standard INSTANCE_TYPE DOCKER_METHOD`
+`./benchmark.sh COUNT INSTANCE_TYPE DOCKER_METHOD`
 
 Where:
 
@@ -36,9 +36,9 @@ Where:
 
 This will:
 
-- look in the `standard/` subdirectory for `cloud-config.yml` and `cloud-init.sh`
-- manipulate these files according to the `DOCKER_METHOD` provided
-- compress these into a file to be passed as userdata
+- look in the `data/` subdirectory for `cloud-config.yml` and `cloud-init.sh`
+- manipulate these files according to the `DOCKER_METHOD` provided into `data/user-data.data.multipart`
+- compress `data/user-data.data.multipart` into `data/user-data.data.multipart.gz` to be passed as userdata
 - spin up `COUNT` instances with the compressed userdata
 
 Don't forget to start an ngrok listener to capture output from instances as they complete cloud-init. (This is a workaround for the unreliability of `aws ec2 get-console-output` for benchmarking purposes.)
