@@ -15,7 +15,6 @@ __extra() {
   # Use a fake queue
   sed -i 's/builds.ec2/builds.fake/' "/etc/default/travis-worker"
 
-  # Specify prestart hook here
   if [[ "$DOCKER_METHOD" == "import" ]]; then
     sed -i 's@.*export TRAVIS_WORKER_PRESTART_HOOK="/var/tmp/travis-run.d/travis-worker-prestart-hook.*"@export TRAVIS_WORKER_PRESTART_HOOK="/var/tmp/travis-run.d/travis-worker-prestart-hook-docker-import"@' /etc/default/travis-worker-cloud-init
   fi
@@ -30,6 +29,7 @@ __prestart_hook() {
   TIME_FORMAT="-f %E\t%C"
   TIME_ARGS="--output=/tmp/stopwatch"
   source /etc/default/travis-worker-cloud-init
+  rm /etc/cron.d/check-docker-health-crontab
 
   if [[ "$DOCKER_METHOD" == "pull" ]]; then
     logger "DOCKER_METHOD IS PULL"
@@ -45,6 +45,7 @@ __prestart_hook() {
     $TIME --append $TIME_ARGS $TIME_FORMAT /var/tmp/travis-run.d/travis-worker-prestart-hook-docker-import
   else
     logger "DOCKER_METHOD IS UNKNOWN!!!!!!!!!"
+    exit 1
   fi
 }
 
@@ -109,7 +110,6 @@ main() {
   fi
 
   service travis-worker stop || true
-  # FIXME: update /usr/local/bin/travis-worker-wrapper otherwise pulls happen
 
   $TIME --append $TIME_ARGS $TIME_FORMAT service travis-worker start || true
 

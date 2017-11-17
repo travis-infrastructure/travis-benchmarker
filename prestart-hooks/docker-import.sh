@@ -7,30 +7,11 @@
 set -x
 echo "import" >/tmp/benchmark-docker-method
 rm /var/tmp/travis-run.d/travis-worker-prestart-hook
+rm /etc/cron.d/check-docker-health-crontab
 
 main() {
   : "${RUNDIR:=/var/tmp/travis-run.d}"
   : "${POST_SHUTDOWN_SLEEP:=300}"
-
-  if [[ -f "${RUNDIR}/implode" ]]; then
-    local reason
-    reason="$(cat "${RUNDIR}/implode" 2>/dev/null)"
-    : "${reason:=not sure why}"
-    echo "refusing to start travis-worker; instance imploding because ${reason}"
-    echo "${reason}" | tee /var/tmp/travis-run.d/implode.confirm
-    sleep "${POST_SHUTDOWN_SLEEP}"
-    exit 1
-  fi
-
-  if [[ ! -f "${RUNDIR}/instance-token" ]]; then
-    curl \
-      -f \
-      -s \
-      -o "${RUNDIR}/instance-token" \
-      -H 'Accept: text/plain' \
-      -H "Authorization: token $CYCLIST_AUTH_TOKEN" \
-      "$CYCLIST_URL/tokens/$(cat "${RUNDIR}/instance-id")"
-  fi
 
   set -o xtrace
 
@@ -42,10 +23,6 @@ main() {
     sleep 10
     let i+=10
   done
-
-  echo "WHOAMI: $(whoami)"
-  [ -z "$TRAVIS_WORKER_DOCKER_IMAGE_ANDROID" ] && echo "NEEDED TO SOURCE!" && source /etc/default/travis-worker-cloud-init
-  sudo apt-get install -y lzop
 
   __docker_import_tag "$TRAVIS_WORKER_DOCKER_IMAGE_ANDROID" travis:android
   __docker_import_tag "$TRAVIS_WORKER_DOCKER_IMAGE_DEFAULT" travis:default

@@ -1,9 +1,12 @@
+#!/usr/bin/env python
+
 from flask import Flask, request
+from collections import OrderedDict
 import json
 import os
-from tabulate import tabulate
 import sys
-from collections import OrderedDict
+import arrow
+from tabulate import tabulate
 
 app = Flask(__name__)
 
@@ -19,7 +22,6 @@ def hello():
 
     if request.method == 'GET':
         data = read_results()
-        #from IPython import embed; embed()
         if "table" in request.environ['CONTENT_TYPE']:
             return display_table()
         return json.dumps(data)
@@ -59,7 +61,21 @@ def display_table():
         row["cloud-init-0-start"], row["cloud-init-1-finish"] = "", ""
         row.update(data[iid])
         rows.append(row)
+    rows = sort_rows(rows)
     return tabulate(rows, headers='keys')
+
+def sort_rows(rows):
+    times = [r['boot_time'] for r in rows]
+    ret_rows = []
+    times = [arrow.get(time, 'MM/DD HH:mm:ss') for time in times]
+    times.sort()
+    for time in times:
+        result = [x for x in rows if arrow.get(x['boot_time'], 'MM/DD HH:mm:ss') == time]
+        if len(result) < 1:
+            from IPython import embed; embed()
+        ret_rows.append(result[0])
+        rows.remove(result[0])
+    return ret_rows
 
 if __name__ == "__main__":
     setup()

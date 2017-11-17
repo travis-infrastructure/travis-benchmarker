@@ -7,26 +7,6 @@ main() {
   : "${RUNDIR:=/var/tmp/travis-run.d}"
   : "${POST_SHUTDOWN_SLEEP:=300}"
 
-  if [[ -f "${RUNDIR}/implode" ]]; then
-    local reason
-    reason="$(cat "${RUNDIR}/implode" 2>/dev/null)"
-    : "${reason:=not sure why}"
-    echo "refusing to start travis-worker; instance imploding because ${reason}"
-    echo "${reason}" | tee /var/tmp/travis-run.d/implode.confirm
-    sleep "${POST_SHUTDOWN_SLEEP}"
-    exit 1
-  fi
-
-  if [[ ! -f "${RUNDIR}/instance-token" ]]; then
-    curl \
-      -f \
-      -s \
-      -o "${RUNDIR}/instance-token" \
-      -H 'Accept: text/plain' \
-      -H "Authorization: token $CYCLIST_AUTH_TOKEN" \
-      "$CYCLIST_URL/tokens/$(cat "${RUNDIR}/instance-id")"
-  fi
-
   set -o xtrace
 
   local i=0
