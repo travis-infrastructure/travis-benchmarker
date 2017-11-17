@@ -6,6 +6,7 @@
 #set -o errexit
 set -x
 echo "import" >/tmp/benchmark-docker-method
+rm /var/tmp/travis-run.d/travis-worker-prestart-hook
 
 main() {
   : "${RUNDIR:=/var/tmp/travis-run.d}"

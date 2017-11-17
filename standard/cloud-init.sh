@@ -33,7 +33,8 @@ __prestart_hook() {
     $TIME --append $TIME_ARGS $TIME_FORMAT /var/tmp/travis-run.d/travis-worker-prestart-hook
   elif [[ "$DOCKER_METHOD" == "import" ]]; then
     logger "DOCKER_METHOD IS IMPORT"
-    sed -i sed 's@TRAVIS_WORKER_PRESTART_HOOK.*@export TRAVIS_WORKER_PRESTART_HOOK="/var/tmp/travis-run.d/travis-worker-prestart-hook"@' /etc/default/travis-worker-cloud-init
+    sed -i 's@.*TRAVIS_WORKER_PRESTART_HOOK.*@export TRAVIS_WORKER_PRESTART_HOOK="/var/tmp/travis-run.d/travis-worker-prestart-hook-docker-import"@' /etc/default/travis-worker-cloud-init
+    sed -i 's@.*TRAVIS_WORKER_PRESTART_HOOK.*@export TRAVIS_WORKER_PRESTART_HOOK="/var/tmp/travis-run.d/travis-worker-prestart-hook-docker-import"@' /var/tmp/travis-run.d/travis-worker.env
     source /etc/default/travis-worker-cloud-init
     apt install -y lzop
     $TIME --append $TIME_ARGS $TIME_FORMAT /var/tmp/travis-run.d/travis-worker-prestart-hook-docker-import
@@ -47,8 +48,8 @@ __mark() {
   : "${RUNDIR:=/var/tmp/travis-run.d}"
 
   instance_id="$(cat "${RUNDIR}/instance-id")"
-  instance_type="$(curl http://169.254.169.254/latest/meta-data/instance-type)"
-  instance_ipv4="$(curl http://169.254.169.254/latest/meta-data/local-ipv4)"
+  instance_type="$(curl -sSL http://169.254.169.254/latest/meta-data/instance-type)"
+  instance_ipv4="$(curl -sSL http://169.254.169.254/latest/meta-data/local-ipv4)"
   docker_method="$(cat /tmp/benchmark-docker-method)"
   graphdriver="$(docker info --format '{{ json .Driver }}' | tr -d '"')"
   filesystem="$(docker info --format '{{ index .DriverStatus 3 }}')"
