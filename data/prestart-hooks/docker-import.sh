@@ -6,7 +6,6 @@
 #set -o errexit
 set -x
 echo "import" >/tmp/benchmark-docker-method
-#rm /var/tmp/travis-run.d/travis-worker-prestart-hook
 rm /etc/cron.d/check-docker-health-crontab
 
 main() {

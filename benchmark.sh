@@ -30,7 +30,7 @@ EOF
 --MIMEBOUNDARY--
 EOF
 
-  dest="$(make_multipart_dest)"
+  dest="data/user-data.multipart"
 
   ####################
   ### cloud-config ###
@@ -76,50 +76,35 @@ EOF
 make_benchmark_env() {
   docker_method="$1"
   docker_volume_type="$2"
-
-  docker_config_file="data/docker-daemon-jsons/daemon-$docker_volume_type.json"
   docker_config_file_dest="/etc/docker/daemon-${docker_volume_type}.json"
-
-  ensure_exists "$docker_config_file" "provided docker volume type --> config file doesn't exist: $docker_config_file"
-
-  prestart_hook="/var/tmp/travis-run.d/travis-worker-prestart-hook"
-  if [[ "$docker_method" == "import" ]]; then
-    prestart_hook="/var/tmp/travis-run.d/travis-worker-prestart-hook-docker-import"
-  fi
 
   sed "s@__DOCKER_METHOD__@$docker_method@; \
     s@__DOCKER_CONFIG__@$docker_config_file_dest@;
-    s@__DOCKER_VOLUME_TYPE__@$docker_volume_type@;
-    s@__PRESTART_HOOK__@$prestart_hook@" \
+    s@__DOCKER_VOLUME_TYPE__@$docker_volume_type@" \
     "${label}/benchmark.env"
-}
-
-make_multipart_dest() {
-  label="data"
-  dest="${label}/user-data.multipart"
-  echo "$dest"
 }
 
 run_instances() {
   instance_type="$1"
   docker_method="$2"
+  count="$3"
   label="data"
   # This can be gp2 for General Purpose SSD, io1 for Provisioned IOPS SSD, st1 for Throughput Optimized HDD, sc1 for Cold HDD, or standard for Magnetic volumes.
   # subnet-2e369b67 => us-east-1b
   # subnet-addd3791 => us-east-1e (io1 not supported in this AZ)
 
-  dest="$(make_multipart_dest).gz"
   cmd="echo -n aws ec2 run-instances \
     --region us-east-1 \
     --placement 'AvailabilityZone=us-east-1b' \
     --key-name aj \
+    --count "$count" \
     --image-id ami-a43c8dde \
     --instance-type "$instance_type" \
     --security-group-ids "sg-4e80c734" "sg-4d80c737" \
     --subnet-id subnet-2e369b67 \
     --tag-specifications '\"ResourceType=instance,Tags=[{Key=role,Value=aj-test},{Key=instance_type,Value="$instance_type"},{Key=docker_method,Value="$docker_method"}]\"' \
     --client-token '$(cat /proc/sys/kernel/random/uuid)' \
-    --user-data 'fileb://'$(make_multipart_dest)'.gz '"
+    --user-data fileb://data/user-data.multipart.gz"
 
   # Note: --block-device-mappings can also be provided as a file, e.g. file://${label}/mapping.json
   # To override the AMI default, use "NoDevice="
@@ -170,20 +155,17 @@ make_cohort() {
   make_multipart "$instance_type" "$docker_method" "$docker_volume_type"
   #stderr_echo "EXITING" && exit
 
-  for _ in $(seq 1 "$cohort_size"); do
-    run_instances_cmd="$(run_instances "$instance_type" "$docker_method")"
-    echo "$run_instances_cmd"
-    echo "$run_instances_cmd" | bash >last_instance.json
-  done
+  run_instances_cmd="$(run_instances "$instance_type" "$docker_method" "$cohort_size")"
+  echo "$run_instances_cmd"
+  echo "$run_instances_cmd" | bash >last_instance_run.json
 }
 
 ensure_exists() {
   filename="$1"
   msg="$2"
-  if [ ! -e "$filename" ]; then
-    [ ! -z "$msg" ] && die "$msg"
-    die "File does not exist: $filename"
-  fi
+  [ -e "$filename" ] && return
+  [ ! -z "$msg" ] && die "$msg"
+  die "File does not exist: $filename"
 }
 
 main() {

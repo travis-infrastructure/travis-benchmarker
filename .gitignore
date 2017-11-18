@@ -3,3 +3,4 @@ user-data.multipart.gz
 instances
 standard/user-data.standard.multipart.gz
 .ropeproject/
+last_instance_run.json

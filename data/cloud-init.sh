@@ -14,7 +14,6 @@ __extra() {
 
   cat /tmp/benchmark.env >>/etc/default/travis-worker-cloud-init
   source /etc/default/travis-worker-cloud-init
-  #fi
 
   sed -i 's/#force_color_prompt=yes/force_color_prompt=yes/' /root/.bashrc
 }
@@ -40,11 +39,11 @@ __prestart_hook() {
 __mark() {
   action="$1"
   : "${RUNDIR:=/var/tmp/travis-run.d}"
+  source /tmp/benchmark.env
 
   instance_id="$(cat "${RUNDIR}/instance-id")"
   instance_type="$(curl -sSL http://169.254.169.254/latest/meta-data/instance-type)"
   instance_ipv4="$(curl -sSL http://169.254.169.254/latest/meta-data/local-ipv4)"
-  docker_method="$(cat /tmp/benchmark-docker-method)"
   graphdriver="$(docker info --format '{{ json .Driver }}' | tr -d '"')"
 
   if [[ "$graphdriver" == "devicemapper" ]]; then
@@ -62,7 +61,7 @@ __mark() {
   boot_time="$(date -d@$boot_time +"%m/%d %H:%M:%S")"
 
   now="$(__uptime_in_secs)"
-  data='{"instance_id":'\"$instance_id\"',"instance_ipv4":'\"$instance_ipv4\"','\"$action\"':'$now',"method":'\"$docker_method\"','
+  data='{"instance_id":'\"$instance_id\"',"instance_ipv4":'\"$instance_ipv4\"','\"$action\"':'$now',"method":'\"$DOCKER_METHOD\"','
   data=''$data'"boot_time":'\"$boot_time\"',"instance_type":'\"$instance_type\"',"graphdriver":'\"$graphdriver\"','
   data=''$data'"volume_type":'\"$volume_type\"',"filesystem":'\"$filesystem\"',"total":'\"$total_time\"',"mem":'\"$mem_total\"'}'
 
