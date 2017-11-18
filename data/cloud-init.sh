@@ -12,7 +12,7 @@ __extra() {
   # Use a fake queue
   sed -i 's/builds.ec2/builds.fake/' "/etc/default/travis-worker"
 
-  cat /tmp/benchmark.env >> /etc/default/travis-worker-cloud-init
+  cat /tmp/benchmark.env >>/etc/default/travis-worker-cloud-init
   source /etc/default/travis-worker-cloud-init
   #fi
 
@@ -149,7 +149,7 @@ __set_aio_max_nr() {
   sysctl -w fs.aio-max-nr=1048576
 }
 
-echo "source /tmp/benchmark.env" >> /etc/profile.d/benchmark.sh
+echo "source /tmp/benchmark.env" >>/etc/profile.d/benchmark.sh
 source /tmp/benchmark.env
 
 apt install -y lzop

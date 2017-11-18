@@ -124,8 +124,8 @@ run_instances() {
   # Note: --block-device-mappings can also be provided as a file, e.g. file://${label}/mapping.json
   # To override the AMI default, use "NoDevice="
   case "$instance_type" in
-  c3.2xlarge)
-    ;;
+  c3.2xlarge) ;;
+
   c3.8xlarge)
     # c3.8xlarge + instance store SSD
     cmd="$cmd --block-device-mappings "NoDevice='""'""
@@ -148,7 +148,7 @@ run_instances() {
 }
 
 stderr_echo() {
-  >&2 echo "$@"
+  echo >&2 "$@"
 }
 
 die() {
@@ -173,7 +173,7 @@ make_cohort() {
   for _ in $(seq 1 "$cohort_size"); do
     run_instances_cmd="$(run_instances "$instance_type" "$docker_method")"
     echo "$run_instances_cmd"
-    echo "$run_instances_cmd" | bash > last_instance.json
+    echo "$run_instances_cmd" | bash >last_instance.json
   done
 }
 
