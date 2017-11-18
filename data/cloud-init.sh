@@ -151,5 +151,4 @@ __set_aio_max_nr() {
 echo "source /tmp/benchmark.env" >>/etc/profile.d/benchmark.sh
 source /tmp/benchmark.env
 
-apt install -y lzop
 main "$@"

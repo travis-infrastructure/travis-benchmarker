@@ -1,5 +1,27 @@
 #!/bin/bash
 
+stderr_echo() {
+  echo >&2 "$@"
+}
+
+die() {
+  usage="$0 COUNT INSTANCE_TYPE"
+  stderr_echo
+  stderr_echo "USAGE: "
+  stderr_echo "  $usage"
+  stderr_echo
+  stderr_echo "$(tput setaf 1) $* $(tput sgr0)"
+  exit 1
+}
+
+ensure_exists() {
+  filename="$1"
+  msg="$2"
+  [ -e "$filename" ] && return
+  [ ! -z "$msg" ] && die "$msg"
+  die "File does not exist: $filename"
+}
+
 make_multipart() {
   instance_type="$1"
   docker_method="$2"
@@ -36,29 +58,28 @@ EOF
   ### cloud-config ###
   ####################
   echo "$HEADER" >"$dest"
-  benchmark_env="$(make_benchmark_env "$docker_method" "$docker_volume_type" | base64 -w 0)"
 
   docker_upstart_file="data/upstarts/docker.conf"
-  ensure_exists "$docker_upstart_file"
-  docker_upstart="$(base64 -w 0 "$docker_upstart_file")"
-
-  local_daemon_config_file="data/docker-daemon-jsons/daemon-$docker_volume_type.json"
-  ensure_exists "$local_daemon_config_file"
-  local_daemon_config="$(base64 -w 0 "$local_daemon_config_file")"
-
+  docker_daemon_config_file="data/docker-daemon-jsons/daemon-$docker_volume_type.json"
   docker_volume_setup_file="data/volume-setups/$docker_volume_type"
-  ensure_exists "$docker_volume_setup_file"
-  docker_volume_setup="$(base64 -w 0 "$docker_volume_setup_file")"
-
   prestart_hook_file="$label/prestart-hooks/docker-$docker_method.sh"
+
+  ensure_exists "$docker_upstart_file"
+  ensure_exists "$docker_daemon_config_file"
+  ensure_exists "$docker_volume_setup_file"
   ensure_exists "$prestart_hook_file"
+
+  docker_upstart="$(base64 -w 0 "$docker_upstart_file")"
+  docker_daemon_config="$(base64 -w 0 "$docker_daemon_config_file")"
+  docker_volume_setup="$(base64 -w 0 "$docker_volume_setup_file")"
   prestart_hook="$(base64 -w 0 "$prestart_hook_file")"
+  benchmark_env="$(make_benchmark_env "$docker_method" "$docker_volume_type" | base64 -w 0)"
 
   sed "s@__DOCKER_METHOD__@$(echo "$prestart_hook")@; \
     s@__BENCHMARK_ENV__@$(echo "$benchmark_env")@; \
     s@__DOCKER_UPSTART__@$(echo "$docker_upstart")@; \
+    s@__DOCKER_DAEMON_JSON__@$(echo "$docker_daemon_config")@; \
     s@__DOCKER_VOLUME_SETUP__@$(echo "$docker_volume_setup")@; \
-    s@__DOCKER_DAEMON_JSON__@$(echo "$local_daemon_config")@; \
     s@__DOCKER_VOLUME_TYPE__@$(echo "$docker_volume_type")@" \
     "${label}/cloud-config.yml" \
     >>"$dest"
@@ -132,20 +153,6 @@ run_instances() {
   eval "$cmd"
 }
 
-stderr_echo() {
-  echo >&2 "$@"
-}
-
-die() {
-  usage="$0 COUNT INSTANCE_TYPE"
-  stderr_echo
-  stderr_echo "USAGE: "
-  stderr_echo "  $usage"
-  stderr_echo
-  stderr_echo "$(tput setaf 1) $* $(tput sgr0)"
-  exit 1
-}
-
 make_cohort() {
   cohort_size="$1"
   label="data"
@@ -158,14 +165,6 @@ make_cohort() {
   run_instances_cmd="$(run_instances "$instance_type" "$docker_method" "$cohort_size")"
   echo "$run_instances_cmd"
   echo "$run_instances_cmd" | bash >last_instance_run.json
-}
-
-ensure_exists() {
-  filename="$1"
-  msg="$2"
-  [ -e "$filename" ] && return
-  [ ! -z "$msg" ] && die "$msg"
-  die "File does not exist: $filename"
 }
 
 main() {
