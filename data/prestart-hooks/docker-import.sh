@@ -6,7 +6,7 @@
 #set -o errexit
 set -x
 echo "import" >/tmp/benchmark-docker-method
-rm /var/tmp/travis-run.d/travis-worker-prestart-hook
+#rm /var/tmp/travis-run.d/travis-worker-prestart-hook
 rm /etc/cron.d/check-docker-health-crontab
 
 main() {
@@ -73,19 +73,6 @@ __docker_upload_tag() {
   docker rm "$CID"
   lzop -9 export.tar -o export.tar.lzo
   aws s3 cp "export.tar.lzo" "s3://aj-benchmark/${image}.tar"
-}
-
-__docker_pull_tag() {
-  local image="$1"
-  local tag="$2"
-
-  [[ "$image" ]] || {
-    echo 'Missing image name'
-    return 1
-  }
-
-  docker pull "$image"
-  docker tag "$image" "$tag"
 }
 
 main "$@"

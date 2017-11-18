@@ -7,21 +7,16 @@ shopt -s nullglob
 
 __extra() {
   run_d="$1"
-  # Remove 'set -o errexit' so we can see if something goes wrong
   sed -i 's/set -o errexit//g' "${run_d}/travis-worker-prestart-hook"
-  sed -i 's/set -o errexit//g' "${run_d}/travis-worker-prestart-hook-docker-import"
-  #sed -i 's@@@' /usr/local/bin/travis-worker-wrapper
 
   # Use a fake queue
   sed -i 's/builds.ec2/builds.fake/' "/etc/default/travis-worker"
 
-  if [[ "$DOCKER_METHOD" == "import" ]]; then
-    sed -i 's@.*export TRAVIS_WORKER_PRESTART_HOOK="/var/tmp/travis-run.d/travis-worker-prestart-hook.*"@export TRAVIS_WORKER_PRESTART_HOOK="/var/tmp/travis-run.d/travis-worker-prestart-hook-docker-import"@' /etc/default/travis-worker-cloud-init
-    cat /tmp/benchmark.env >> /etc/default/travis-worker-cloud-init
-    source /etc/default/travis-worker-cloud-init
-  fi
+  cat /tmp/benchmark.env >> /etc/default/travis-worker-cloud-init
+  source /etc/default/travis-worker-cloud-init
+  #fi
 
-  # FIXME: if /etc/docker/config.json doesn't exist, symlink it
+  sed -i 's/#force_color_prompt=yes/force_color_prompt=yes/' /root/.bashrc
 }
 
 __uptime_in_secs() {
@@ -35,22 +30,11 @@ __prestart_hook() {
   source /etc/default/travis-worker-cloud-init
   rm /etc/cron.d/check-docker-health-crontab
 
-  if [[ "$DOCKER_METHOD" == "pull" ]]; then
-    logger "DOCKER_METHOD IS PULL"
-    $TIME --append $TIME_ARGS $TIME_FORMAT /var/tmp/travis-run.d/travis-worker-prestart-hook
-  elif [[ "$DOCKER_METHOD" == "import" ]]; then
+  if [[ "$DOCKER_METHOD" == "import" ]]; then
     logger "DOCKER_METHOD IS IMPORT"
     apt install -y lzop
-    # why doesn't lzop get installed :'(
-    ln -sf /var/tmp/travis-run.d/travis-worker-prestart-hook-docker-import /var/tmp/travis-run.d/travis-worker-prestart-hook
-    sed -i 's@.*TRAVIS_WORKER_PRESTART_HOOK.*@export TRAVIS_WORKER_PRESTART_HOOK="/var/tmp/travis-run.d/travis-worker-prestart-hook-docker-import"@' /etc/default/travis-worker-cloud-init
-    sed -i 's@.*TRAVIS_WORKER_PRESTART_HOOK.*@export TRAVIS_WORKER_PRESTART_HOOK="/var/tmp/travis-run.d/travis-worker-prestart-hook-docker-import"@' /var/tmp/travis-run.d/travis-worker.env
-    source /etc/default/travis-worker-cloud-init
-    $TIME --append $TIME_ARGS $TIME_FORMAT /var/tmp/travis-run.d/travis-worker-prestart-hook-docker-import
-  else
-    logger "DOCKER_METHOD IS UNKNOWN!!!!!!!!!"
-    exit 1
   fi
+  $TIME --append $TIME_ARGS $TIME_FORMAT /var/tmp/travis-run.d/travis-worker-prestart-hook
 }
 
 __mark() {

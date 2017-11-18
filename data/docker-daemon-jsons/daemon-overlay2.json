@@ -5,7 +5,7 @@
     "unix:///var/run/docker.sock"
   ],
   "icc": false,
-  "storage-driver": "devicemapper",
+  "storage-driver": "overlay2",
   "userns-remap": "default",
   "debug": true
 }

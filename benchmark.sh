@@ -3,8 +3,7 @@
 make_multipart() {
   instance_type="$1"
   docker_method="$2"
-  docker_config_file="$3"
-  docker_volume_type="$4"
+  docker_volume_type="$3"
   label="data"
 
   read -r -d '' HEADER <<-EOF
@@ -33,36 +32,41 @@ EOF
 
   dest="$(make_multipart_dest)"
 
-  ##################
-  ### cloud-init ###
-  ##################
-  echo "$HEADER" >"$dest"
-  benchmark_env="$(make_benchmark_env "$docker_method" "$docker_config_file" "$docker_volume_type")"
-  docker_upstart="$(cat data/upstarts/docker.conf)"
-
-  local_daemon_config="$(cat "data/docker-daemon-jsons/daemon-$docker_volume_type.json")"
-  docker_volume_setup="$(cat data/volume-setups/$docker_volume_type)"
-
-  sed "s@__DOCKER_IMPORT__@$(base64 $label/prestart-hooks/docker-import.sh -w 0)@; \
-    s@__BENCHMARK_ENV__@$(echo "$benchmark_env" | base64 -w 0)@; \
-    s@__DOCKER_UPSTART__@$(echo "$docker_upstart" | base64 -w 0)@; \
-    s@__DOCKER_VOLUME_SETUP__@$(echo "$docker_volume_setup" | base64 -w 0)@; \
-    s@__DOCKER_DAEMON_JSON__@$(echo "$local_daemon_config" | base64 -w 0)@; \
-    s@__DOCKER_VOLUME_TYPE__@$(echo "$docker_volume_type")@; \
-    s@__DOCKER_PULL__@$(base64 $label/prestart-hooks/docker-pull.sh -w 0)@" \
-    "${label}/cloud-config.yml" \
-    >>"$dest"
-
   ####################
   ### cloud-config ###
   ####################
-  echo "$BOUNDARY" >>"$dest"
-  #echo "'echo \"source /tmp/benchmark.env\" >> /etc/profile.d/benchmark.sh'" >>"$dest"
-  #echo "echo \"source /tmp/benchmark.env\" >> /etc/profile.d/benchmark.sh" >>"$dest"
+  echo "$HEADER" >"$dest"
+  benchmark_env="$(make_benchmark_env "$docker_method" "$docker_volume_type" | base64 -w 0)"
 
-  #sed "s@__DOCKER_METHOD__@export DOCKER_METHOD='$docker_method'@" \
-    #"${label}/cloud-init.sh" \
-    #>>"$dest"
+  docker_upstart_file="data/upstarts/docker.conf"
+  ensure_exists "$docker_upstart_file"
+  docker_upstart="$(base64 -w 0 "$docker_upstart_file")"
+
+  local_daemon_config_file="data/docker-daemon-jsons/daemon-$docker_volume_type.json"
+  ensure_exists "$local_daemon_config_file"
+  local_daemon_config="$(base64 -w 0 "$local_daemon_config_file")"
+
+  docker_volume_setup_file="data/volume-setups/$docker_volume_type"
+  ensure_exists "$docker_volume_setup_file"
+  docker_volume_setup="$(base64 -w 0 "$docker_volume_setup_file")"
+
+  prestart_hook_file="$label/prestart-hooks/docker-$docker_method.sh"
+  ensure_exists "$prestart_hook_file"
+  prestart_hook="$(base64 -w 0 "$prestart_hook_file")"
+
+  sed "s@__DOCKER_METHOD__@$(echo "$prestart_hook")@; \
+    s@__BENCHMARK_ENV__@$(echo "$benchmark_env")@; \
+    s@__DOCKER_UPSTART__@$(echo "$docker_upstart")@; \
+    s@__DOCKER_VOLUME_SETUP__@$(echo "$docker_volume_setup")@; \
+    s@__DOCKER_DAEMON_JSON__@$(echo "$local_daemon_config")@; \
+    s@__DOCKER_VOLUME_TYPE__@$(echo "$docker_volume_type")@" \
+    "${label}/cloud-config.yml" \
+    >>"$dest"
+
+  ##################
+  ### cloud-init ###
+  ##################
+  echo "$BOUNDARY" >>"$dest"
   echo "$(cat "${label}/cloud-init.sh")" >>"$dest"
   echo "$FOOTER" >>"$dest"
 
@@ -71,8 +75,12 @@ EOF
 
 make_benchmark_env() {
   docker_method="$1"
-  docker_config_file="$2"
-  docker_volume_type="$3"
+  docker_volume_type="$2"
+
+  docker_config_file="data/docker-daemon-jsons/daemon-$docker_volume_type.json"
+  docker_config_file_dest="/etc/docker/daemon-${docker_volume_type}.json"
+
+  ensure_exists "$docker_config_file" "provided docker volume type --> config file doesn't exist: $docker_config_file"
 
   prestart_hook="/var/tmp/travis-run.d/travis-worker-prestart-hook"
   if [[ "$docker_method" == "import" ]]; then
@@ -80,7 +88,7 @@ make_benchmark_env() {
   fi
 
   sed "s@__DOCKER_METHOD__@$docker_method@; \
-    s@__DOCKER_CONFIG__@$docker_config_file@;
+    s@__DOCKER_CONFIG__@$docker_config_file_dest@;
     s@__DOCKER_VOLUME_TYPE__@$docker_volume_type@;
     s@__PRESTART_HOOK__@$prestart_hook@" \
     "${label}/benchmark.env"
@@ -158,42 +166,39 @@ make_cohort() {
   label="data"
   instance_type="$2"
   docker_method="$3"
-  docker_config_file="$4"
 
-  make_multipart "$instance_type" "$docker_method" "$docker_config_file" "$docker_volume_type"
+  make_multipart "$instance_type" "$docker_method" "$docker_volume_type"
   #stderr_echo "EXITING" && exit
 
   for _ in $(seq 1 "$cohort_size"); do
     run_instances_cmd="$(run_instances "$instance_type" "$docker_method")"
     echo "$run_instances_cmd"
-    result="$(echo "$run_instances_cmd" | bash)"
-    instance_ip=$(echo "$result" | jq .Instances[].NetworkInterfaces[].PrivateIpAddresses[].PrivateIpAddress | tr -d '"')
-    instance_id=$(echo "$result" | jq .Instances[].InstanceId | tr -d '"')
-    mkdir -p "$label/instances/$instance_id"
-    echo "$result" >"$label/instances/$instance_id/$instance_ip.json"
+    echo "$run_instances_cmd" | bash > last_instance.json
   done
+}
+
+ensure_exists() {
+  filename="$1"
+  msg="$2"
+  if [ ! -e "$filename" ]; then
+    [ ! -z "$msg" ] && die "$msg"
+    die "File does not exist: $filename"
+  fi
 }
 
 main() {
   count="$1"
   instance_type="$2"
   docker_method="$3"
-  docker_config_file="$4"
-  docker_volume_type="$5"
-  #: "${docker_config_file:=/etc/docker/}"
+  docker_volume_type="$4"
 
-  #[ -z "$label" ] && die "Please provide a label for this test, corresponding to a directory containing LABEL/cloud-init.sh and LABEL/cloud-config.yml."
-  #[ ! -d "$label" ] && die "Directory $label not found."
   [ -z "$count" ] && die "Please provide a count of instances to create."
   [ -z "$instance_type" ] && die "Please provide an instance type as a second argument"
-  [ -z "$docker_method" ] && die "Please provide docker method (pull, import) as third rgument"
-  [ -z "$docker_config_file" ] && die "Please provide docker config file as fourth rgument (/etc/docker/daemon.json, /etc/docker/daemon-direct-lvm.json, ...)"
-  [ -z "$docker_volume_type" ] && die "Please provide docker volume type as rgument (direct-lvm)"
-  if [ ! -e "data/docker-daemon-jsons/daemon-$docker_volume_type.json" ]; then
-    die "provided docker volume type --> config file doesn't exist: data/docker-daemon-jsons/$docker_volume_type"
-  fi
+  [ -z "$docker_method" ] && die "Please provide docker method (pull, import) as third argument"
+  [ -z "$docker_volume_type" ] && die "Please provide docker volume type (sic) as fourth argument (direct-lvm, overlay2)"
+  ensure_exists "data/docker-daemon-jsons/daemon-$docker_volume_type.json" "provided docker volume type --> config file doesn't exist: data/docker-daemon-jsons/$docker_volume_type"
 
-  make_cohort "$count" "$instance_type" "$docker_method" "$docker_config_file" "$docker_volume_type"
+  make_cohort "$count" "$instance_type" "$docker_method" "$docker_volume_type"
 }
 
 main "$@"
