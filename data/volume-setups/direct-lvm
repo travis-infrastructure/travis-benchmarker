@@ -1,0 +1,24 @@
+#!/bin/bash
+# Chef manages this file on ip-10-12-10-86.ec2.internal <3 <3 <3
+# Actually, no. This file is written to (when 'direct-lvm' is provided as volume type):
+# /usr/local/bin/travis-docker-volume-setup
+
+set -ex
+
+: ${DEVICE:=/dev/xvdc}
+: ${METADATA_SIZE:=2G}
+
+if [[ -e /dev/direct-lvm/metadata ]] ; then
+  echo "$(basename $0): Metadata volume already exists.  Assuming set up"
+  exit 0
+fi
+
+pvcreate "$DEVICE"
+
+vgcreate direct-lvm $DEVICE
+
+lvcreate -n metadata direct-lvm --size "$METADATA_SIZE"
+dd if=/dev/zero of=/dev/direct-lvm/metadata bs=1M count=10
+
+lvcreate -n data direct-lvm -l '100%FREE'
+dd if=/dev/zero of=/dev/direct-lvm/data bs=1M count=10

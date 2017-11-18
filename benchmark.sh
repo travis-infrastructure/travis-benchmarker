@@ -3,6 +3,8 @@
 make_multipart() {
   instance_type="$1"
   docker_method="$2"
+  docker_config_file="$3"
+  docker_volume_type="$4"
   label="data"
 
   read -r -d '' HEADER <<-EOF
@@ -35,7 +37,18 @@ EOF
   ### cloud-init ###
   ##################
   echo "$HEADER" >"$dest"
+  benchmark_env="$(make_benchmark_env "$docker_method" "$docker_config_file" "$docker_volume_type")"
+  docker_upstart="$(cat data/upstarts/docker.conf)"
+
+  local_daemon_config="$(cat "data/docker-daemon-jsons/daemon-$docker_volume_type.json")"
+  docker_volume_setup="$(cat data/volume-setups/$docker_volume_type)"
+
   sed "s@__DOCKER_IMPORT__@$(base64 $label/prestart-hooks/docker-import.sh -w 0)@; \
+    s@__BENCHMARK_ENV__@$(echo "$benchmark_env" | base64 -w 0)@; \
+    s@__DOCKER_UPSTART__@$(echo "$docker_upstart" | base64 -w 0)@; \
+    s@__DOCKER_VOLUME_SETUP__@$(echo "$docker_volume_setup" | base64 -w 0)@; \
+    s@__DOCKER_DAEMON_JSON__@$(echo "$local_daemon_config" | base64 -w 0)@; \
+    s@__DOCKER_VOLUME_TYPE__@$(echo "$docker_volume_type")@; \
     s@__DOCKER_PULL__@$(base64 $label/prestart-hooks/docker-pull.sh -w 0)@" \
     "${label}/cloud-config.yml" \
     >>"$dest"
@@ -44,12 +57,33 @@ EOF
   ### cloud-config ###
   ####################
   echo "$BOUNDARY" >>"$dest"
-  sed "s@__DOCKER_METHOD__@export DOCKER_METHOD='$docker_method'@" \
-    "${label}/cloud-init.sh" \
-    >>"$dest"
+  #echo "'echo \"source /tmp/benchmark.env\" >> /etc/profile.d/benchmark.sh'" >>"$dest"
+  #echo "echo \"source /tmp/benchmark.env\" >> /etc/profile.d/benchmark.sh" >>"$dest"
+
+  #sed "s@__DOCKER_METHOD__@export DOCKER_METHOD='$docker_method'@" \
+    #"${label}/cloud-init.sh" \
+    #>>"$dest"
+  echo "$(cat "${label}/cloud-init.sh")" >>"$dest"
   echo "$FOOTER" >>"$dest"
 
   gzip -f "$dest"
+}
+
+make_benchmark_env() {
+  docker_method="$1"
+  docker_config_file="$2"
+  docker_volume_type="$3"
+
+  prestart_hook="/var/tmp/travis-run.d/travis-worker-prestart-hook"
+  if [[ "$docker_method" == "import" ]]; then
+    prestart_hook="/var/tmp/travis-run.d/travis-worker-prestart-hook-docker-import"
+  fi
+
+  sed "s@__DOCKER_METHOD__@$docker_method@; \
+    s@__DOCKER_CONFIG__@$docker_config_file@;
+    s@__DOCKER_VOLUME_TYPE__@$docker_volume_type@;
+    s@__PRESTART_HOOK__@$prestart_hook@" \
+    "${label}/benchmark.env"
 }
 
 make_multipart_dest() {
@@ -124,8 +158,10 @@ make_cohort() {
   label="data"
   instance_type="$2"
   docker_method="$3"
+  docker_config_file="$4"
 
-  make_multipart "$instance_type" "$docker_method"
+  make_multipart "$instance_type" "$docker_method" "$docker_config_file" "$docker_volume_type"
+  #stderr_echo "EXITING" && exit
 
   for _ in $(seq 1 "$cohort_size"); do
     run_instances_cmd="$(run_instances "$instance_type" "$docker_method")"
@@ -142,14 +178,22 @@ main() {
   count="$1"
   instance_type="$2"
   docker_method="$3"
+  docker_config_file="$4"
+  docker_volume_type="$5"
+  #: "${docker_config_file:=/etc/docker/}"
 
   #[ -z "$label" ] && die "Please provide a label for this test, corresponding to a directory containing LABEL/cloud-init.sh and LABEL/cloud-config.yml."
   #[ ! -d "$label" ] && die "Directory $label not found."
   [ -z "$count" ] && die "Please provide a count of instances to create."
-  [ -z "$instance_type" ] && die "Please provide an instance type as a third argument"
-  [ -z "$docker_method" ] && die "Please provide docker method (pull, import) as fourth rgument"
+  [ -z "$instance_type" ] && die "Please provide an instance type as a second argument"
+  [ -z "$docker_method" ] && die "Please provide docker method (pull, import) as third rgument"
+  [ -z "$docker_config_file" ] && die "Please provide docker config file as fourth rgument (/etc/docker/daemon.json, /etc/docker/daemon-direct-lvm.json, ...)"
+  [ -z "$docker_volume_type" ] && die "Please provide docker volume type as rgument (direct-lvm)"
+  if [ ! -e "data/docker-daemon-jsons/daemon-$docker_volume_type.json" ]; then
+    die "provided docker volume type --> config file doesn't exist: data/docker-daemon-jsons/$docker_volume_type"
+  fi
 
-  make_cohort "$count" "$instance_type" "$docker_method"
+  make_cohort "$count" "$instance_type" "$docker_method" "$docker_config_file" "$docker_volume_type"
 }
 
 main "$@"

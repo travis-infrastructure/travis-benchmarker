@@ -1,0 +1,8 @@
+#!/bin/bash
+# Chef manages this file on ip-10-12-10-86.ec2.internal <3 <3 <3
+# Actually, no. This file is written to (when 'direct-lvm' is provided as volume type):
+# /usr/local/bin/travis-docker-volume-setup
+
+set -ex
+
+echo "nothing to set up for overlay2"

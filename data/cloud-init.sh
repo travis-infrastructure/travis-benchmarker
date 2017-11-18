@@ -10,14 +10,18 @@ __extra() {
   # Remove 'set -o errexit' so we can see if something goes wrong
   sed -i 's/set -o errexit//g' "${run_d}/travis-worker-prestart-hook"
   sed -i 's/set -o errexit//g' "${run_d}/travis-worker-prestart-hook-docker-import"
-  sed -i 's@@@' /usr/local/bin/travis-worker-wrapper
+  #sed -i 's@@@' /usr/local/bin/travis-worker-wrapper
 
   # Use a fake queue
   sed -i 's/builds.ec2/builds.fake/' "/etc/default/travis-worker"
 
   if [[ "$DOCKER_METHOD" == "import" ]]; then
     sed -i 's@.*export TRAVIS_WORKER_PRESTART_HOOK="/var/tmp/travis-run.d/travis-worker-prestart-hook.*"@export TRAVIS_WORKER_PRESTART_HOOK="/var/tmp/travis-run.d/travis-worker-prestart-hook-docker-import"@' /etc/default/travis-worker-cloud-init
+    cat /tmp/benchmark.env >> /etc/default/travis-worker-cloud-init
+    source /etc/default/travis-worker-cloud-init
   fi
+
+  # FIXME: if /etc/docker/config.json doesn't exist, symlink it
 }
 
 __uptime_in_secs() {
@@ -58,7 +62,16 @@ __mark() {
   instance_ipv4="$(curl -sSL http://169.254.169.254/latest/meta-data/local-ipv4)"
   docker_method="$(cat /tmp/benchmark-docker-method)"
   graphdriver="$(docker info --format '{{ json .Driver }}' | tr -d '"')"
-  filesystem="$(docker info --format '{{ index .DriverStatus 3 }}')"
+
+  if [[ "$graphdriver" == "devicemapper" ]]; then
+    filesystem="$(docker info --format '{{ index .DriverStatus 3 }}')"
+  elif [[ "$graphdriver" == "overlay2" ]]; then
+    filesystem="$(docker info --format '{{ index .DriverStatus 0 }}')"
+  else
+    filesystem="$(docker info --format '{{ .DriverStatus }}')"
+  fi
+
+  volume_type="$DOCKER_VOLUME_TYPE"
   total_time="$(tail -n1 /tmp/stopwatch | awk '{print $1}')"
   mem_total="$(free -hm | grep ^Mem: | awk '{print $2}')"
   boot_time="$(cat /var/lib/cloud/data/status.json | grep start | head -n1 | awk '{print $2}' | tr -d ',')"
@@ -67,7 +80,7 @@ __mark() {
   now="$(__uptime_in_secs)"
   data='{"instance_id":'\"$instance_id\"',"instance_ipv4":'\"$instance_ipv4\"','\"$action\"':'$now',"method":'\"$docker_method\"','
   data=''$data'"boot_time":'\"$boot_time\"',"instance_type":'\"$instance_type\"',"graphdriver":'\"$graphdriver\"','
-  data=''$data'"filesystem":'\"$filesystem\"',"total":'\"$total_time\"',"mem":'\"$mem_total\"'}'
+  data=''$data'"volume_type":'\"$volume_type\"',"filesystem":'\"$filesystem\"',"total":'\"$total_time\"',"mem":'\"$mem_total\"'}'
 
   __post_to_ngrok "$data"
 }
@@ -152,7 +165,8 @@ __set_aio_max_nr() {
   sysctl -w fs.aio-max-nr=1048576
 }
 
-__DOCKER_METHOD__
+echo "source /tmp/benchmark.env" >> /etc/profile.d/benchmark.sh
+source /tmp/benchmark.env
 
 apt install -y lzop
 main "$@"

@@ -59,6 +59,7 @@ def display_table():
         row["method"], row["total"] = "", ""
         row["instance_type"] = ""
         row["cloud-init-0-start"], row["cloud-init-1-finish"] = "", ""
+        row["volume_type"] = ""
         row.update(data[iid])
         rows.append(row)
     rows = sort_rows(rows)
