@@ -18,7 +18,7 @@ Note: `soulshake.ngrok.io` is currently hardcoded.
 
 ### Run the benchmark
 
-`./benchmark.sh COUNT INSTANCE_TYPE DOCKER_METHOD`
+`./benchmark.sh COUNT INSTANCE_TYPE DOCKER_METHOD STORAGE_DRIVER`
 
 Where:
 
@@ -34,11 +34,17 @@ Where:
 - `pull`
 - `import`
 
+`STORAGE_DRIVER` is one of:
+- `direct-lvm` (Yes, this is a misnomer)
+- `overlay2`
+
+
+
 This will:
 
 - look in the `data/` subdirectory for `cloud-config.yml` and `cloud-init.sh`
-- manipulate these files according to the `DOCKER_METHOD` provided into `data/user-data.data.multipart`
-- compress `data/user-data.data.multipart` into `data/user-data.data.multipart.gz` to be passed as userdata
+- manipulate these files according to the `DOCKER_METHOD` and write to `data/user-data.multipart`
+- compress `data/user-data.multipart` into `data/user-data.multipart.gz` to be passed as userdata
 - spin up `COUNT` instances with the compressed userdata
 
 Don't forget to start an ngrok listener to capture output from instances as they complete cloud-init. (This is a workaround for the unreliability of `aws ec2 get-console-output` for benchmarking purposes.)
