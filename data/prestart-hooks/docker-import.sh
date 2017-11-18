@@ -1,12 +1,6 @@
 #!/bin/bash
-
-#travis-worker-prestart-hook-docker-import
-#!/usr/bin/env bash
 # vim:filetype=sh
-#set -o errexit
 set -x
-echo "import" >/tmp/benchmark-docker-method
-rm /etc/cron.d/check-docker-health-crontab
 
 main() {
   : "${RUNDIR:=/var/tmp/travis-run.d}"
@@ -22,6 +16,13 @@ main() {
     sleep 10
     let i+=10
   done
+  echo "==== BEFORE __docker_pre_import ===="
+  docker images
+  echo "===================================="
+  docker images | grep 0B$ | awk '{print $1 ":" $2}' | xargs docker rmi
+
+  __docker_pre_import
+  wait
 
   __docker_import_tag "$TRAVIS_WORKER_DOCKER_IMAGE_ANDROID" travis:android
   __docker_import_tag "$TRAVIS_WORKER_DOCKER_IMAGE_DEFAULT" travis:default
@@ -43,6 +44,20 @@ main() {
 
 }
 
+__docker_pre_import() {
+  images="
+  travisci/ci-garnet:packer-1508249879-29cd77f
+  travisci/ci-amethyst:packer-1508250117-29cd77f
+  "
+  docker images
+  for image in $images; do
+    if ! docker inspect "$image" >/dev/null; then
+      curl -sSL "http://aj-benchmark.s3.amazonaws.com/${image}.tar.lzo" | lzop -d | docker import --message "New image imported from s3" - "${image}" &
+    fi
+  done
+  wait
+}
+
 __docker_import_tag() {
   local image="$1"
   local tag="$2"
@@ -53,8 +68,8 @@ __docker_import_tag() {
   }
 
   set -o pipefail
-  if ! docker inspect "$image" &>/dev/null; then
-    curl "http://aj-benchmark.s3.amazonaws.com/${image}.tar.lzo" | lzop -d | docker import --message "New image imported from s3" - "${image}"
+  if ! docker inspect "$image" >/dev/null; then
+    curl -sSL "http://aj-benchmark.s3.amazonaws.com/${image}.tar.lzo" | lzop -d | docker import --message "New image imported from s3" - "${image}"
   fi
   docker tag "${image}" "${tag}"
 }

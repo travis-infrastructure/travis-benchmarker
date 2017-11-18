@@ -7,7 +7,6 @@ shopt -s nullglob
 
 __extra() {
   run_d="$1"
-  sed -i 's/set -o errexit//g' "${run_d}/travis-worker-prestart-hook"
 
   # Use a fake queue
   sed -i 's/builds.ec2/builds.fake/' "/etc/default/travis-worker"
@@ -27,7 +26,6 @@ __prestart_hook() {
   TIME_FORMAT="-f %E\t%C"
   TIME_ARGS="--output=/tmp/stopwatch"
   source /etc/default/travis-worker-cloud-init
-  rm /etc/cron.d/check-docker-health-crontab
 
   if [[ "$DOCKER_METHOD" == "import" ]]; then
     logger "DOCKER_METHOD IS IMPORT"
