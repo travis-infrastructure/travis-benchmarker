@@ -5,11 +5,30 @@ stderr_echo() {
 }
 
 die() {
-  usage="$0 COUNT INSTANCE_TYPE"
+  usage="$0 COUNT INSTANCE_TYPE DOCKER_METHOD STORAGE_DRIVER
+
+  Where:
+
+  COUNT: Number of instances to create
+
+  INSTANCE_TYPE:
+    - c3.2xlarge
+    - c3.8xlarge
+    - r4.8xlarge
+    - c5.9xlarge
+
+  DOCKER_METHOD:
+    - pull
+    - import
+
+  STORAGE_DRIVER:
+    - overlay2
+    - direct-lvm (sic)
+  "
+
   stderr_echo
   stderr_echo "USAGE: "
   stderr_echo "  $usage"
-  stderr_echo
   stderr_echo "$(tput setaf 1) $* $(tput sgr0)"
   exit 1
 }
@@ -175,10 +194,19 @@ main() {
   docker_volume_type="$4"
 
   [ -z "$count" ] && die "Please provide a count of instances to create."
-  [ -z "$instance_type" ] && die "Please provide an instance type as a second argument"
-  [ -z "$docker_method" ] && die "Please provide docker method (pull, import) as third argument"
-  [ -z "$docker_volume_type" ] && die "Please provide docker volume type (sic) as fourth argument (direct-lvm, overlay2)"
-  ensure_exists "data/docker-daemon-jsons/daemon-$docker_volume_type.json" "provided docker volume type --> config file doesn't exist: data/docker-daemon-jsons/$docker_volume_type"
+  [ -z "$instance_type" ] && die "Please provide an instance type as a second argument."
+  [ -z "$docker_method" ] && die "Please provide docker method (pull, import) as third argument."
+  [ -z "$docker_volume_type" ] && die "Please provide docker storage driver keyword as fourth argument."
+
+  case "$docker_method" in
+  pull|import) ;;
+  *)
+    die "Invalid docker method '$docker_method' (expected: pull, import)"
+    ;;
+  esac
+
+  ensure_exists "data/docker-daemon-jsons/daemon-$docker_volume_type.json" \
+    "provided docker storage driver type '$docker_volume_type' --> config file doesn't exist: data/docker-daemon-jsons/$docker_volume_type"
 
   make_cohort "$count" "$instance_type" "$docker_method" "$docker_volume_type"
 }
