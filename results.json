@@ -12,16 +12,30 @@
         "total": "10:19.47", 
         "volume_type": "overlay2"
     }, 
+    "i-008359fc4bd72b659": {
+        "boot_time": "11/19 20:35:28", 
+        "cloud-init-0-start": 12, 
+        "cloud-init-1-finish": 571, 
+        "filesystem": "[Backing Filesystem extfs]", 
+        "graphdriver": "overlay2", 
+        "instance_ipv4": "10.10.2.243", 
+        "instance_type": "c3.2xlarge", 
+        "mem": "14G", 
+        "method": "pull", 
+        "total": "9:06.97", 
+        "volume_type": "overlay2"
+    }, 
     "i-008968193b9875333": {
         "boot_time": "11/18 23:26:05", 
         "cloud-init-0-start": 12, 
-        "filesystem": "", 
-        "graphdriver": "", 
+        "cloud-init-1-finish": 3104, 
+        "filesystem": "[Backing Filesystem extfs]", 
+        "graphdriver": "overlay2", 
         "instance_ipv4": "10.10.2.186", 
         "instance_type": "c3.2xlarge", 
         "mem": "14G", 
         "method": "pull", 
-        "total": "", 
+        "total": "51:21.30", 
         "volume_type": "overlay2"
     }, 
     "i-0093292727c7e4a6b": {
@@ -51,13 +65,14 @@
     "i-015fe1885f118797d": {
         "boot_time": "11/18 23:26:06", 
         "cloud-init-0-start": 12, 
-        "filesystem": "", 
-        "graphdriver": "", 
+        "cloud-init-1-finish": 3269, 
+        "filesystem": "[Backing Filesystem extfs]", 
+        "graphdriver": "overlay2", 
         "instance_ipv4": "10.10.2.33", 
         "instance_type": "c3.2xlarge", 
         "mem": "14G", 
         "method": "pull", 
-        "total": "", 
+        "total": "54:05.79", 
         "volume_type": "overlay2"
     }, 
     "i-0189db3f4a02d11be": {
@@ -102,13 +117,14 @@
     "i-030a562f82866036c": {
         "boot_time": "11/18 23:26:02", 
         "cloud-init-0-start": 12, 
-        "filesystem": "", 
-        "graphdriver": "", 
+        "cloud-init-1-finish": 3304, 
+        "filesystem": "[Backing Filesystem extfs]", 
+        "graphdriver": "overlay2", 
         "instance_ipv4": "10.10.2.124", 
         "instance_type": "c3.2xlarge", 
         "mem": "14G", 
         "method": "pull", 
-        "total": "", 
+        "total": "54:39.55", 
         "volume_type": "overlay2"
     }, 
     "i-0343d9bdbc1d2770c": {
@@ -136,6 +152,18 @@
         "method": "import", 
         "total": "0:00.89", 
         "volume_type": "overlay2"
+    }, 
+    "i-03a026115627fc687": {
+        "boot_time": "11/20 01:21:52", 
+        "cloud-init-0-start": 16, 
+        "filesystem": "", 
+        "graphdriver": "", 
+        "instance_ipv4": "10.10.2.36", 
+        "instance_type": "c5.9xlarge", 
+        "mem": "68G", 
+        "method": "pull", 
+        "total": "", 
+        "volume_type": "direct-lvm"
     }, 
     "i-04260917236cd5afc": {
         "boot_time": "11/18 18:01:01", 
@@ -231,13 +259,27 @@
     "i-04f071976824f69f8": {
         "boot_time": "11/18 23:26:04", 
         "cloud-init-0-start": 12, 
-        "filesystem": "", 
-        "graphdriver": "", 
+        "cloud-init-1-finish": 3456, 
+        "filesystem": "[Backing Filesystem extfs]", 
+        "graphdriver": "overlay2", 
         "instance_ipv4": "10.10.2.74", 
         "instance_type": "c3.2xlarge", 
         "mem": "14G", 
         "method": "pull", 
-        "total": "", 
+        "total": "57:11.78", 
+        "volume_type": "overlay2"
+    }, 
+    "i-062e1d3647ed11059": {
+        "boot_time": "11/19 20:35:29", 
+        "cloud-init-0-start": 12, 
+        "cloud-init-1-finish": 712, 
+        "filesystem": "[Backing Filesystem extfs]", 
+        "graphdriver": "overlay2", 
+        "instance_ipv4": "10.10.2.15", 
+        "instance_type": "c3.2xlarge", 
+        "mem": "14G", 
+        "method": "pull", 
+        "total": "11:28.70", 
         "volume_type": "overlay2"
     }, 
     "i-06ca531a859b72e08": {
@@ -256,13 +298,14 @@
     "i-06f711819e50a0075": {
         "boot_time": "11/18 23:26:04", 
         "cloud-init-0-start": 13, 
-        "filesystem": "", 
-        "graphdriver": "", 
+        "cloud-init-1-finish": 3495, 
+        "filesystem": "[Backing Filesystem extfs]", 
+        "graphdriver": "overlay2", 
         "instance_ipv4": "10.10.2.75", 
         "instance_type": "c3.2xlarge", 
         "mem": "14G", 
         "method": "pull", 
-        "total": "", 
+        "total": "57:51.19", 
         "volume_type": "overlay2"
     }, 
     "i-06ffac13a18280ba0": {
@@ -345,13 +388,14 @@
     "i-08f0a3d4e532a84ff": {
         "boot_time": "11/18 23:26:03", 
         "cloud-init-0-start": 12, 
-        "filesystem": "", 
-        "graphdriver": "", 
+        "cloud-init-1-finish": 3557, 
+        "filesystem": "[Backing Filesystem extfs]", 
+        "graphdriver": "overlay2", 
         "instance_ipv4": "10.10.2.58", 
         "instance_type": "c3.2xlarge", 
         "mem": "14G", 
         "method": "pull", 
-        "total": "", 
+        "total": "58:53.27", 
         "volume_type": "overlay2"
     }, 
     "i-09209a60262fa277c": {
@@ -422,13 +466,14 @@
     "i-0a9805b9eeb0d2804": {
         "boot_time": "11/18 23:26:03", 
         "cloud-init-0-start": 12, 
-        "filesystem": "", 
-        "graphdriver": "", 
+        "cloud-init-1-finish": 2626, 
+        "filesystem": "[Backing Filesystem extfs]", 
+        "graphdriver": "overlay2", 
         "instance_ipv4": "10.10.2.215", 
         "instance_type": "c3.2xlarge", 
         "mem": "14G", 
         "method": "pull", 
-        "total": "", 
+        "total": "43:23.18", 
         "volume_type": "overlay2"
     }, 
     "i-0adc694ad31913c0a": {
@@ -460,13 +505,27 @@
     "i-0b15aec6c6e07447b": {
         "boot_time": "11/18 23:26:04", 
         "cloud-init-0-start": 12, 
-        "filesystem": "", 
-        "graphdriver": "", 
+        "cloud-init-1-finish": 3415, 
+        "filesystem": "[Backing Filesystem extfs]", 
+        "graphdriver": "overlay2", 
         "instance_ipv4": "10.10.2.23", 
         "instance_type": "c3.2xlarge", 
         "mem": "14G", 
         "method": "pull", 
-        "total": "", 
+        "total": "56:32.31", 
+        "volume_type": "overlay2"
+    }, 
+    "i-0b579aa29fc6838ec": {
+        "boot_time": "11/19 00:45:11", 
+        "cloud-init-0-start": 13, 
+        "cloud-init-1-finish": 593, 
+        "filesystem": "[Backing Filesystem extfs]", 
+        "graphdriver": "overlay2", 
+        "instance_ipv4": "10.10.2.175", 
+        "instance_type": "c3.2xlarge", 
+        "mem": "14G", 
+        "method": "pull", 
+        "total": "9:28.04", 
         "volume_type": "overlay2"
     }, 
     "i-0c7bbd847fdf7dbe8": {
@@ -508,6 +567,18 @@
         "total": "4:49.42", 
         "volume_type": "overlay2"
     }, 
+    "i-0cd38c38a6d527bba": {
+        "boot_time": "11/20 01:27:01", 
+        "cloud-init-0-start": 26, 
+        "filesystem": "", 
+        "graphdriver": "", 
+        "instance_ipv4": "10.10.2.203", 
+        "instance_type": "c5.9xlarge", 
+        "mem": "68G", 
+        "method": "pull", 
+        "total": "", 
+        "volume_type": "direct-lvm"
+    }, 
     "i-0d351ca7b39f321cf": {
         "boot_time": "11/18 19:07:44", 
         "cloud-init-0-start": 19, 
@@ -534,16 +605,29 @@
         "total": "0:00.49", 
         "volume_type": "overlay2"
     }, 
+    "i-0dd2891fa5ca24c6f": {
+        "boot_time": "11/20 01:22:39", 
+        "cloud-init-0-start": 17, 
+        "filesystem": "", 
+        "graphdriver": "", 
+        "instance_ipv4": "10.10.2.37", 
+        "instance_type": "c5.9xlarge", 
+        "mem": "68G", 
+        "method": "pull", 
+        "total": "", 
+        "volume_type": "direct-lvm"
+    }, 
     "i-0dd96d870e19d9d7b": {
         "boot_time": "11/18 23:26:05", 
         "cloud-init-0-start": 14, 
-        "filesystem": "", 
-        "graphdriver": "", 
+        "cloud-init-1-finish": 4219, 
+        "filesystem": "[Backing Filesystem extfs]", 
+        "graphdriver": "overlay2", 
         "instance_ipv4": "10.10.2.102", 
         "instance_type": "c3.2xlarge", 
         "mem": "14G", 
         "method": "pull", 
-        "total": "", 
+        "total": "1:09:54", 
         "volume_type": "overlay2"
     }, 
     "i-0e34901e919923667": {
@@ -679,13 +763,14 @@
     "i-0fa37fd5770c3d667": {
         "boot_time": "11/18 23:26:04", 
         "cloud-init-0-start": 14, 
-        "filesystem": "", 
-        "graphdriver": "", 
+        "cloud-init-1-finish": 3101, 
+        "filesystem": "[Backing Filesystem extfs]", 
+        "graphdriver": "overlay2", 
         "instance_ipv4": "10.10.2.78", 
         "instance_type": "c3.2xlarge", 
         "mem": "14G", 
         "method": "pull", 
-        "total": "", 
+        "total": "51:15.02", 
         "volume_type": "overlay2"
     }, 
     "i-0fa752af13ed5e9ba": {

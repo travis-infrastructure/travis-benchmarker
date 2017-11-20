@@ -123,7 +123,7 @@ run_instances() {
     --instance-type "$instance_type" \
     --security-group-ids "sg-4e80c734" "sg-4d80c737" \
     --subnet-id subnet-2e369b67 \
-    --tag-specifications '\"ResourceType=instance,Tags=[{Key=role,Value=aj-test},{Key=instance_type,Value="$instance_type"},{Key=docker_method,Value="$docker_method"}]\"' \
+    --tag-specifications '\"ResourceType=instance,Tags=[{Key=role,Value=aj-test},{Key=instance_type,Value="$instance_type"},{Key=docker_method,Value="$docker_method"},{Key=cohort_size,Value="$count"}]\"' \
     --client-token '$(cat /proc/sys/kernel/random/uuid)' \
     --user-data fileb://data/user-data.multipart.gz"
 
@@ -134,13 +134,14 @@ run_instances() {
 
   c3.8xlarge)
     # c3.8xlarge + instance store SSD
+    # FIXME
     cmd="$cmd --block-device-mappings "NoDevice='""'""
     ;;
   c5.9xlarge)
     # c5.9xlarge + ebs io1 volume
     #echo --block-device-mappings "'DeviceName=/dev/sda1,VirtualName=/dev/xvdc,Ebs={DeleteOnTermination=true,SnapshotId=snap-05ddc125d72e3592d,VolumeSize=8,VolumeType=\"io1\",Iops=1000}'"
-    echo --block-device-mappings "'DeviceName=/dev/sda1,VirtualName=/dev/xvdc,Ebs={DeleteOnTermination=true,VolumeSize=8,VolumeType=io1,Iops=100}'"
-    # TODO: update docker-daemon.json because "Device /dev/xvdc not found"
+    cmd=''"$cmd"' --block-device-mappings \"DeviceName=/dev/xvdc,VirtualName=/dev/xvdc,Ebs=\{DeleteOnTermination=true,VolumeSize=8,VolumeType=io1,Iops=100\}\"'
+    # FIXME: update docker-daemon.json because "Device /dev/xvdc not found"
     ;;
   r4.8xlarge)
     # r4.8xlarge + in-memory docker
