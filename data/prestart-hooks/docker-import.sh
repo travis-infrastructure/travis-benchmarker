@@ -17,6 +17,7 @@ main() {
     let i+=10
   done
   echo "==== BEFORE __docker_pre_import ===="
+  # FIXME: Don't know where all these 0B images are coming from
   docker images
   echo "===================================="
   docker images | grep 0B$ | awk '{print $1 ":" $2}' | xargs docker rmi

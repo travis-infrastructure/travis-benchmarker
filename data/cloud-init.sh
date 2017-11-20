@@ -11,10 +11,34 @@ __extra() {
   # Use a fake queue
   sed -i 's/builds.ec2/builds.fake/' "/etc/default/travis-worker"
 
-  cat /tmp/benchmark.env >>/etc/default/travis-worker-cloud-init
-  source /etc/default/travis-worker-cloud-init
 
   sed -i 's/#force_color_prompt=yes/force_color_prompt=yes/' /root/.bashrc
+
+  cat /tmp/benchmark.env >>/etc/default/travis-worker-cloud-init
+  source /etc/default/travis-worker-cloud-init
+}
+
+__post_extra() {
+  # get docker root dir (docker info)
+  # root_dir="$(docker info --format '{{ json .DockerRootDir }}')"
+  # lsblk --output NAME,KNAME,FSTYPE,MOUNTPOINT,SIZE,TYPE
+
+  if blkid /dev/xvdc | grep LVM; then
+    volume_type="direct-lvm"
+  else
+    volume_type="ext3?"
+  fi
+  sed -i 's/__DOCKER_VOLUME_TYPE__/'$volume_type'/' /tmp/benchmark.env
+  # devicemapper:
+  # # blkid /dev/xvdc
+    # /dev/xvdc: UUID="vxtMwc-k4vv-dskD-bu3V-e9za-sM1Q-fgf4CZ" TYPE="LVM2_member"
+
+  # overlay2:
+  # # blkid /dev/xvdc
+    # /dev/xvdc: UUID="aa75b9db-5e39-4bb9-99e3-763224f1de98" SEC_TYPE="ext2" TYPE="ext3"
+
+  cat /tmp/benchmark.env >>/etc/default/travis-worker-cloud-init
+  source /etc/default/travis-worker-cloud-init
 }
 
 __uptime_in_secs() {
@@ -52,7 +76,8 @@ __mark() {
     filesystem="$(docker info --format '{{ .DriverStatus }}')"
   fi
 
-  volume_type="$DOCKER_VOLUME_TYPE"
+
+  #volume_type="$DOCKER_VOLUME_TYPE"
   total_time="$(tail -n1 /tmp/stopwatch | awk '{print $1}')"
   mem_total="$(free -hm | grep ^Mem: | awk '{print $2}')"
   boot_time="$(cat /var/lib/cloud/data/status.json | grep start | head -n1 | awk '{print $2}' | tr -d ',')"
@@ -122,6 +147,7 @@ main() {
   done
 
   __prestart_hook
+  __post_extra
   __mark "cloud-init-1-finish"
 }
 

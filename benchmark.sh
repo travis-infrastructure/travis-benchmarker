@@ -44,7 +44,7 @@ ensure_exists() {
 make_multipart() {
   instance_type="$1"
   docker_method="$2"
-  docker_volume_type="$3"
+  docker_graph_driver="$3"
   label="data"
 
   read -r -d '' HEADER <<-EOF
@@ -79,8 +79,8 @@ EOF
   echo "$HEADER" >"$dest"
 
   docker_upstart_file="data/upstarts/docker.conf"
-  docker_daemon_config_file="data/docker-daemon-jsons/daemon-$docker_volume_type.json"
-  docker_volume_setup_file="data/volume-setups/$docker_volume_type"
+  docker_daemon_config_file="data/docker-daemon-jsons/daemon-$docker_graph_driver.json"
+  docker_volume_setup_file="data/volume-setups/$docker_graph_driver"
   prestart_hook_file="$label/prestart-hooks/docker-$docker_method.sh"
 
   ensure_exists "$docker_upstart_file"
@@ -92,14 +92,14 @@ EOF
   docker_daemon_config="$(base64 -w 0 "$docker_daemon_config_file")"
   docker_volume_setup="$(base64 -w 0 "$docker_volume_setup_file")"
   prestart_hook="$(base64 -w 0 "$prestart_hook_file")"
-  benchmark_env="$(make_benchmark_env "$docker_method" "$docker_volume_type" | base64 -w 0)"
+  benchmark_env="$(make_benchmark_env "$docker_method" "$docker_graph_driver" | base64 -w 0)"
 
   sed "s@__DOCKER_METHOD__@$(echo "$prestart_hook")@; \
     s@__BENCHMARK_ENV__@$(echo "$benchmark_env")@; \
     s@__DOCKER_UPSTART__@$(echo "$docker_upstart")@; \
     s@__DOCKER_DAEMON_JSON__@$(echo "$docker_daemon_config")@; \
     s@__DOCKER_VOLUME_SETUP__@$(echo "$docker_volume_setup")@; \
-    s@__DOCKER_VOLUME_TYPE__@$(echo "$docker_volume_type")@" \
+    s@__DOCKER_GRAPH_DRIVER__@$(echo "$docker_graph_driver")@" \
     "${label}/cloud-config.yml" \
     >>"$dest"
 
@@ -115,12 +115,12 @@ EOF
 
 make_benchmark_env() {
   docker_method="$1"
-  docker_volume_type="$2"
-  docker_config_file_dest="/etc/docker/daemon-${docker_volume_type}.json"
+  docker_graph_driver="$2"
+  docker_config_file_dest="/etc/docker/daemon-${docker_graph_driver}.json"
 
   sed "s@__DOCKER_METHOD__@$docker_method@; \
     s@__DOCKER_CONFIG__@$docker_config_file_dest@;
-    s@__DOCKER_VOLUME_TYPE__@$docker_volume_type@" \
+    s@__DOCKER_GRAPH_DRIVER__@$docker_graph_driver@" \
     "${label}/benchmark.env"
 }
 
@@ -179,7 +179,7 @@ make_cohort() {
   instance_type="$2"
   docker_method="$3"
 
-  make_multipart "$instance_type" "$docker_method" "$docker_volume_type"
+  make_multipart "$instance_type" "$docker_method" "$docker_graph_driver"
   #stderr_echo "EXITING" && exit
 
   run_instances_cmd="$(run_instances "$instance_type" "$docker_method" "$cohort_size")"
@@ -191,12 +191,12 @@ main() {
   count="$1"
   instance_type="$2"
   docker_method="$3"
-  docker_volume_type="$4"
+  docker_graph_driver="$4"
 
   [ -z "$count" ] && die "Please provide a count of instances to create."
   [ -z "$instance_type" ] && die "Please provide an instance type as a second argument."
   [ -z "$docker_method" ] && die "Please provide docker method (pull, import) as third argument."
-  [ -z "$docker_volume_type" ] && die "Please provide docker storage driver keyword as fourth argument."
+  [ -z "$docker_graph_driver" ] && die "Please provide docker storage driver keyword as fourth argument."
 
   case "$docker_method" in
   pull|import) ;;
@@ -205,18 +205,17 @@ main() {
     ;;
   esac
 
-  case "$docker_volume_type" in
-  overlay2) ;;
-  devicemapper) ;;
+  case "$docker_graph_driver" in
+  overlay2|devicemapper) ;;
   *)
-    die "Invalid docker volume time '$docker_volume_type' (expected: overlay2, devicemapper)"
+    die "Invalid graph driver '$docker_graph_driver' (expected: overlay2, devicemapper)"
     ;;
   esac
 
-  ensure_exists "data/docker-daemon-jsons/daemon-$docker_volume_type.json" \
-    "provided docker storage driver type '$docker_volume_type' --> config file doesn't exist: data/docker-daemon-jsons/$docker_volume_type"
+  ensure_exists "data/docker-daemon-jsons/daemon-$docker_graph_driver.json" \
+    "provided docker storage driver type '$docker_graph_driver' --> config file doesn't exist: data/docker-daemon-jsons/$docker_graph_driver"
 
-  make_cohort "$count" "$instance_type" "$docker_method" "$docker_volume_type"
+  make_cohort "$count" "$instance_type" "$docker_method" "$docker_graph_driver"
 }
 
 main "$@"

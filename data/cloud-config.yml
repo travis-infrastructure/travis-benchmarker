@@ -82,4 +82,4 @@ write_files:
 - content: __DOCKER_DAEMON_JSON__
   encoding: b64
   owner: 'root:root'
-  path: /etc/docker/daemon-__DOCKER_VOLUME_TYPE__.json
+  path: /etc/docker/daemon-__DOCKER_GRAPH_DRIVER__.json
