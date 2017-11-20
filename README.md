@@ -6,15 +6,13 @@
 
 This will start a basic local webserver that will the instances will send benchmark data to:
 
-- `python listener.py`
-- `ngrok http --subdomain soulshake 5000`
+- `docker build -t benchmarker .`
+- `docker run -ti -v $PWD:/src -p "80:5000" benchmarker`
+- `ngrok http 80` (replace `soulshake.ngrok.io` below with the domain ngrok provides you)
 
 You can test the listener as follows:
 
-- `python listener.py --show`
-- `curl -H "Content-Type: application/json" -X POST -d '{"instance_id": "i-foo", "finished": "mraaa"}' http://soulshake.ngrok.io`
-
-Note: `soulshake.ngrok.io` is currently hardcoded.
+- `curl -H "Content-Type: application/table" soulshake.ngrok.io`
 
 ### Run the benchmark
 
@@ -35,10 +33,8 @@ Where:
 - `import`
 
 `STORAGE_DRIVER` is one of:
-- `direct-lvm` (Yes, this is a misnomer)
+- `direct-lvm` (this is a misnomer, sorry)
 - `overlay2`
-
-
 
 This will:
 
@@ -51,12 +47,11 @@ Don't forget to start an ngrok listener to capture output from instances as they
 
 ## To do
 
-- modify to use other graph drivers
 - get `FIXME` instance types working
 
 ## See also
 
-Potentially useful files for benchmarking purposes:
+Potentially useful files for benchmarking purposes on EC2 instances:
 
 - `/var/lib/cloud/data/status.json`
 - `/var/lib/cloud/instance/user-data.txt`

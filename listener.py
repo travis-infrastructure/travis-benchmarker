@@ -83,4 +83,4 @@ if __name__ == "__main__":
     if "--show" in sys.argv:
         print(display_table())
         exit()
-    app.run(debug=True)
+    app.run(debug=True, host="0.0.0.0")
