@@ -1,9 +1,6 @@
 #!/usr/bin/env bash
 # vim:filetype=sh
 set -o errexit
-#source /tmp/benchmark.env
-#cat /tmp/benchmark.env
-#echo "$DOCKER_METHOD" > /tmp/benchmark-docker-method
 
 main() {
   : "${RUNDIR:=/var/tmp/travis-run.d}"

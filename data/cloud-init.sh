@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 # vim:filetype=sh
-# set -o errexit
+set -o errexit
 set -o pipefail
 shopt -s nullglob
-#set -x
+set -x
 
 __extra() {
   run_d="$1"
@@ -22,6 +22,7 @@ __post_extra() {
   # get docker root dir (docker info)
   # root_dir="$(docker info --format '{{ json .DockerRootDir }}')"
   # lsblk --output NAME,KNAME,FSTYPE,MOUNTPOINT,SIZE,TYPE
+  logger "======================= in __post_extra ======================="
 
   if blkid /dev/xvdc | grep LVM; then
     volume_type="direct-lvm"
@@ -39,6 +40,7 @@ __post_extra() {
 
   cat /tmp/benchmark.env >>/etc/default/travis-worker-cloud-init
   source /etc/default/travis-worker-cloud-init
+  logger "======================= done with __post_extra ======================="
 }
 
 __uptime_in_secs() {
@@ -59,6 +61,7 @@ __prestart_hook() {
 }
 
 __mark() {
+  set +e
   action="$1"
   : "${RUNDIR:=/var/tmp/travis-run.d}"
   source /tmp/benchmark.env
@@ -82,13 +85,16 @@ __mark() {
   mem_total="$(free -hm | grep ^Mem: | awk '{print $2}')"
   boot_time="$(cat /var/lib/cloud/data/status.json | grep start | head -n1 | awk '{print $2}' | tr -d ',')"
   boot_time="$(date -d@$boot_time +"%m/%d %H:%M:%S")"
+  image_count="$(docker images | egrep 'GB|MB' | awk '{print $3}' | sort -u | wc -l)"
 
   now="$(__uptime_in_secs)"
   data='{"instance_id":'\"$instance_id\"',"instance_ipv4":'\"$instance_ipv4\"','\"$action\"':'$now',"method":'\"$DOCKER_METHOD\"','
   data=''$data'"boot_time":'\"$boot_time\"',"instance_type":'\"$instance_type\"',"graphdriver":'\"$graphdriver\"','
-  data=''$data'"volume_type":'\"$volume_type\"',"filesystem":'\"$filesystem\"',"total":'\"$total_time\"',"mem":'\"$mem_total\"'}'
+  data=''$data'"volume_type":'\"$volume_type\"',"filesystem":'\"$filesystem\"',"total":'\"$total_time\"',"mem":'\"$mem_total\"','
+  data=''$data'"images":'\"$image_count\"'}'
 
   __post_to_ngrok "$data"
+  set -e
 }
 
 __post_to_ngrok() {

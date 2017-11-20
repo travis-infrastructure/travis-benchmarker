@@ -45,6 +45,7 @@ make_multipart() {
   instance_type="$1"
   docker_method="$2"
   docker_graph_driver="$3"
+  cohort_size="$4"
   label="data"
 
   read -r -d '' HEADER <<-EOF
@@ -103,6 +104,7 @@ EOF
     s@__DOCKER_UPSTART__@$(echo "$docker_upstart")@; \
     s@__DOCKER_DAEMON_JSON__@$(echo "$docker_daemon_config")@; \
     s@__DOCKER_VOLUME_SETUP__@$(echo "$docker_volume_setup")@; \
+    s@__COHORT_SIZE__@$(echo "$cohort_size")@; \
     s@__DOCKER_GRAPH_DRIVER__@$(echo "$docker_graph_driver")@" \
     "${label}/cloud-config.yml" \
     >>"$dest"
@@ -183,7 +185,7 @@ make_cohort() {
   instance_type="$2"
   docker_method="$3"
 
-  make_multipart "$instance_type" "$docker_method" "$docker_graph_driver"
+  make_multipart "$instance_type" "$docker_method" "$docker_graph_driver" "$cohort_size"
   #stderr_echo "EXITING" && exit
 
   run_instances_cmd="$(run_instances "$instance_type" "$docker_method" "$cohort_size")"
