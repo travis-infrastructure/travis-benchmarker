@@ -86,19 +86,20 @@ __mark() {
   boot_time="$(cat /var/lib/cloud/data/status.json | grep start | head -n1 | awk '{print $2}' | tr -d ',')"
   boot_time="$(date -d@$boot_time +"%m/%d %H:%M:%S")"
   image_count="$(docker images | egrep 'GB|MB' | awk '{print $3}' | sort -u | wc -l)"
+  cohort_size="$COHORT_SIZE"
 
   now="$(__uptime_in_secs)"
   data='{"instance_id":'\"$instance_id\"',"instance_ipv4":'\"$instance_ipv4\"','\"$action\"':'$now',"method":'\"$DOCKER_METHOD\"','
   data=''$data'"boot_time":'\"$boot_time\"',"instance_type":'\"$instance_type\"',"graphdriver":'\"$graphdriver\"','
   data=''$data'"volume_type":'\"$volume_type\"',"filesystem":'\"$filesystem\"',"total":'\"$total_time\"',"mem":'\"$mem_total\"','
-  data=''$data'"images":'\"$image_count\"'}'
+  data=''$data'"images":'\"$image_count\"',"cohort_size":'\"$cohort_size\"'}'
 
   __post_to_ngrok "$data"
   set -e
 }
 
 __post_to_ngrok() {
-  curl -H "Content-Type: application/json" -X POST -d "$@" soulshake.ngrok.io
+  curl -sSL -H "Content-Type: application/json" -X POST -d "$@" soulshake.ngrok.io
 }
 
 main() {

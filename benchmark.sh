@@ -97,14 +97,13 @@ EOF
   fi
   docker_volume_setup="$(base64 -w 0 "$docker_volume_setup_file")"
   prestart_hook="$(base64 -w 0 "$prestart_hook_file")"
-  benchmark_env="$(make_benchmark_env "$docker_method" "$docker_graph_driver" | base64 -w 0)"
+  benchmark_env="$(make_benchmark_env "$docker_method" "$docker_graph_driver" "$cohort_size" | base64 -w 0)"
 
   sed "s@__DOCKER_METHOD__@$(echo "$prestart_hook")@; \
     s@__BENCHMARK_ENV__@$(echo "$benchmark_env")@; \
     s@__DOCKER_UPSTART__@$(echo "$docker_upstart")@; \
     s@__DOCKER_DAEMON_JSON__@$(echo "$docker_daemon_config")@; \
     s@__DOCKER_VOLUME_SETUP__@$(echo "$docker_volume_setup")@; \
-    s@__COHORT_SIZE__@$(echo "$cohort_size")@; \
     s@__DOCKER_GRAPH_DRIVER__@$(echo "$docker_graph_driver")@" \
     "${label}/cloud-config.yml" \
     >>"$dest"
@@ -122,10 +121,12 @@ EOF
 make_benchmark_env() {
   docker_method="$1"
   docker_graph_driver="$2"
+  cohort_size="$3"
   docker_config_file_dest="/etc/docker/daemon-${docker_graph_driver}.json"
 
   sed "s@__DOCKER_METHOD__@$docker_method@; \
     s@__DOCKER_CONFIG__@$docker_config_file_dest@;
+    s@__COHORT_SIZE__@$(echo "$cohort_size")@; \
     s@__DOCKER_GRAPH_DRIVER__@$docker_graph_driver@" \
     "${label}/benchmark.env"
 }

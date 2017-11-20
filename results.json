@@ -51,6 +51,20 @@
         "total": "19:43.33",
         "volume_type": "direct-lvm"
     },
+    "i-02b4b72a76d17a547": {
+        "boot_time": "11/20 22:55:18",
+        "cloud-init-0-start": 13,
+        "cohort_size": "1",
+        "filesystem": "",
+        "graphdriver": "",
+        "images": "0",
+        "instance_ipv4": "10.10.2.94",
+        "instance_type": "c3.2xlarge",
+        "mem": "14G",
+        "method": "pull-mirror",
+        "total": "",
+        "volume_type": "__DOCKER_VOLUME_TYPE__"
+    },
     "i-051026380b71a5bfa": {
         "boot_time": "11/20 21:36:02",
         "cloud-init-0-start": 652,
@@ -119,14 +133,15 @@
     "i-0bf1f33ede29b3360": {
         "boot_time": "11/20 22:39:20",
         "cloud-init-0-start": 13,
-        "filesystem": "",
-        "graphdriver": "",
-        "images": "0",
+        "cloud-init-1-finish": 464,
+        "filesystem": "[Backing Filesystem extfs]",
+        "graphdriver": "overlay2",
+        "images": "2",
         "instance_ipv4": "10.10.2.76",
         "instance_type": "c3.2xlarge",
         "mem": "14G",
         "method": "pull-mirror",
-        "total": "",
+        "total": "7:19.54",
         "volume_type": "__DOCKER_VOLUME_TYPE__"
     },
     "i-0eb103cc8c0601378": {
