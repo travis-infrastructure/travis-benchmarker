@@ -23,7 +23,7 @@ die() {
 
   STORAGE_DRIVER:
     - overlay2
-    - direct-lvm (sic)
+    - devicemapper
   "
 
   stderr_echo
@@ -202,6 +202,14 @@ main() {
   pull|import) ;;
   *)
     die "Invalid docker method '$docker_method' (expected: pull, import)"
+    ;;
+  esac
+
+  case "$docker_volume_type" in
+  overlay2) ;;
+  devicemapper) ;;
+  *)
+    die "Invalid docker volume time '$docker_volume_type' (expected: overlay2, devicemapper)"
     ;;
   esac
 

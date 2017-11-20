@@ -16,7 +16,7 @@ You can test the listener as follows:
 
 ### Run the benchmark
 
-`./benchmark.sh COUNT INSTANCE_TYPE DOCKER_METHOD STORAGE_DRIVER`
+`./benchmark.sh <COUNT> <INSTANCE_TYPE> <DOCKER_METHOD> <STORAGE_DRIVER>`
 
 Where:
 
@@ -33,7 +33,7 @@ Where:
 - `import`
 
 `STORAGE_DRIVER` is one of:
-- `direct-lvm` (this is a misnomer, sorry)
+- `devicemapper`
 - `overlay2`
 
 This will:

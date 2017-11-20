@@ -76,6 +76,18 @@
         "total": "",
         "volume_type": "direct-lvm"
     },
+    "i-041262ec5a2749795": {
+        "boot_time": "11/20 19:31:31",
+        "cloud-init-0-start": 26,
+        "filesystem": "",
+        "graphdriver": "",
+        "instance_ipv4": "10.10.2.201",
+        "instance_type": "c3.2xlarge",
+        "mem": "14G",
+        "method": "pull",
+        "total": "",
+        "volume_type": "devicemapper"
+    },
     "i-04260917236cd5afc": {
         "boot_time": "11/18 18:01:01",
         "cloud-init-0-start": 16,
@@ -359,6 +371,18 @@
         "method": "import",
         "total": "6:59.96",
         "volume_type": "overlay2"
+    },
+    "i-0a20c14dd73404ae0": {
+        "boot_time": "11/20 19:32:51",
+        "cloud-init-0-start": 15,
+        "filesystem": "",
+        "graphdriver": "",
+        "instance_ipv4": "10.10.2.189",
+        "instance_type": "c3.8xlarge",
+        "mem": "58G",
+        "method": "pull",
+        "total": "",
+        "volume_type": "devicemapper"
     },
     "i-0a230744306969176": {
         "boot_time": "11/18 19:51:07",
