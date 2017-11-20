@@ -27,9 +27,10 @@ __post_extra() {
   if blkid /dev/xvdc | grep LVM; then
     volume_type="direct-lvm"
   else
-    volume_type="ext3?"
+    volume_type="ext3\?"
   fi
-  sed -i 's/__DOCKER_VOLUME_TYPE__/'$volume_type'/' /tmp/benchmark.env
+
+  sed -i "s/__DOCKER_VOLUME_TYPE__/$volume_type/" /tmp/benchmark.env
   # devicemapper:
   # # blkid /dev/xvdc
     # /dev/xvdc: UUID="vxtMwc-k4vv-dskD-bu3V-e9za-sM1Q-fgf4CZ" TYPE="LVM2_member"
@@ -103,7 +104,7 @@ __post_to_ngrok() {
 }
 
 main() {
-  __mark "cloud-init-0-start"
+  __mark "ci-start"
   TIME=/usr/bin/time
   TIME_FORMAT="-f %E\t%C"
   TIME_ARGS="--output=/tmp/stopwatch"
@@ -155,7 +156,7 @@ main() {
 
   __prestart_hook
   __post_extra
-  __mark "cloud-init-1-finish"
+  __mark "ci-finish"
 }
 
 __wait_for_docker() {

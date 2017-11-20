@@ -5,7 +5,7 @@ stderr_echo() {
 }
 
 die() {
-  usage="$0 COUNT INSTANCE_TYPE DOCKER_METHOD STORAGE_DRIVER
+  usage="$0 COUNT INSTANCE_TYPE DOCKER_METHOD GRAPH_DRIVER
 
   Where:
 
@@ -21,7 +21,7 @@ die() {
     - pull
     - import
 
-  STORAGE_DRIVER:
+  GRAPH_DRIVER:
     - overlay2
     - devicemapper
   "
@@ -203,7 +203,7 @@ main() {
   [ -z "$count" ] && die "Please provide a count of instances to create."
   [ -z "$instance_type" ] && die "Please provide an instance type as a second argument."
   [ -z "$docker_method" ] && die "Please provide docker method (pull, import) as third argument."
-  [ -z "$docker_graph_driver" ] && die "Please provide docker storage driver keyword as fourth argument."
+  [ -z "$docker_graph_driver" ] && die "Please provide docker graph driver as fourth argument."
 
   case "$docker_method" in
   pull-hub|pull-mirror|import) ;;
@@ -220,7 +220,7 @@ main() {
   esac
 
   ensure_exists "data/docker-daemon-jsons/daemon-$docker_graph_driver.json" \
-    "provided docker storage driver type '$docker_graph_driver' --> config file doesn't exist: data/docker-daemon-jsons/$docker_graph_driver"
+    "provided docker graph driver type '$docker_graph_driver' --> config file doesn't exist: data/docker-daemon-jsons/$docker_graph_driver"
 
   make_cohort "$count" "$instance_type" "$docker_method" "$docker_graph_driver"
 }
