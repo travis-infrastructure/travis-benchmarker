@@ -1,7 +1,33 @@
 #!/bin/bash
 
+stderr_echo() {
+  echo >&2 "$@"
+}
+
+die() {
+  usage="$0 COUNT INSTANCE_TYPE"
+  stderr_echo
+  stderr_echo "USAGE: "
+  stderr_echo "  $usage"
+  stderr_echo
+  stderr_echo "$(tput setaf 1) $* $(tput sgr0)"
+  exit 1
+}
+
+ensure_exists() {
+  filename="$1"
+  msg="$2"
+  [ -e "$filename" ] && return
+  [ ! -z "$msg" ] && die "$msg"
+  die "File does not exist: $filename"
+}
+
 make_multipart() {
-  label="$1"
+  instance_type="$1"
+  docker_method="$2"
+  docker_volume_type="$3"
+  label="data"
+
   read -r -d '' HEADER <<-EOF
 Content-Type: multipart/mixed; boundary="MIMEBOUNDARY"
 MIME-Version: 1.0
@@ -26,145 +52,135 @@ EOF
 --MIMEBOUNDARY--
 EOF
 
-  dest="${label}/user-data.${label}.multipart"
+  dest="data/user-data.multipart"
+
+  ####################
+  ### cloud-config ###
+  ####################
   echo "$HEADER" >"$dest"
-  cat "${label}/cloud-config.yml" >>"$dest"
+
+  docker_upstart_file="data/upstarts/docker.conf"
+  docker_daemon_config_file="data/docker-daemon-jsons/daemon-$docker_volume_type.json"
+  docker_volume_setup_file="data/volume-setups/$docker_volume_type"
+  prestart_hook_file="$label/prestart-hooks/docker-$docker_method.sh"
+
+  ensure_exists "$docker_upstart_file"
+  ensure_exists "$docker_daemon_config_file"
+  ensure_exists "$docker_volume_setup_file"
+  ensure_exists "$prestart_hook_file"
+
+  docker_upstart="$(base64 -w 0 "$docker_upstart_file")"
+  docker_daemon_config="$(base64 -w 0 "$docker_daemon_config_file")"
+  docker_volume_setup="$(base64 -w 0 "$docker_volume_setup_file")"
+  prestart_hook="$(base64 -w 0 "$prestart_hook_file")"
+  benchmark_env="$(make_benchmark_env "$docker_method" "$docker_volume_type" | base64 -w 0)"
+
+  sed "s@__DOCKER_METHOD__@$(echo "$prestart_hook")@; \
+    s@__BENCHMARK_ENV__@$(echo "$benchmark_env")@; \
+    s@__DOCKER_UPSTART__@$(echo "$docker_upstart")@; \
+    s@__DOCKER_DAEMON_JSON__@$(echo "$docker_daemon_config")@; \
+    s@__DOCKER_VOLUME_SETUP__@$(echo "$docker_volume_setup")@; \
+    s@__DOCKER_VOLUME_TYPE__@$(echo "$docker_volume_type")@" \
+    "${label}/cloud-config.yml" \
+    >>"$dest"
+
+  ##################
+  ### cloud-init ###
+  ##################
   echo "$BOUNDARY" >>"$dest"
-  cat "${label}/cloud-init.sh" >>"$dest"
+  echo "$(cat "${label}/cloud-init.sh")" >>"$dest"
   echo "$FOOTER" >>"$dest"
 
   gzip -f "$dest"
 }
 
-make_token() {
-  cat /proc/sys/kernel/random/uuid
+make_benchmark_env() {
+  docker_method="$1"
+  docker_volume_type="$2"
+  docker_config_file_dest="/etc/docker/daemon-${docker_volume_type}.json"
+
+  sed "s@__DOCKER_METHOD__@$docker_method@; \
+    s@__DOCKER_CONFIG__@$docker_config_file_dest@;
+    s@__DOCKER_VOLUME_TYPE__@$docker_volume_type@" \
+    "${label}/benchmark.env"
 }
 
 run_instances() {
-  label="$1"
-  echo aws ec2 run-instances \
-    --region us-east-1 \
-    --key-name aj \
-    --image-id ami-a43c8dde \
-    --instance-type c3.2xlarge \
-    --security-group-ids "sg-4e80c734" "sg-4d80c737" \
-    --subnet-id subnet-addd3791 \
-    --tag-specifications "'ResourceType=instance,Tags=[{Key=role,Value=aj-test},{Key=label,Value='$label'}]'" \
-    --client-token "$(make_token)" \
-    --user-data 'fileb://'${label}'/user-data.'${label}'.multipart.gz' \
-    --block-device-mappings "'DeviceName=/dev/sda1,VirtualName=/dev/xvdc,Ebs={DeleteOnTermination=true,SnapshotId=snap-05ddc125d72e3592d,VolumeSize=8,VolumeType=gp2}'"
-}
+  instance_type="$1"
+  docker_method="$2"
+  count="$3"
+  label="data"
+  # This can be gp2 for General Purpose SSD, io1 for Provisioned IOPS SSD, st1 for Throughput Optimized HDD, sc1 for Cold HDD, or standard for Magnetic volumes.
+  # subnet-2e369b67 => us-east-1b
+  # subnet-addd3791 => us-east-1e (io1 not supported in this AZ)
 
-die() {
-  usage="$0 LABEL COUNT"
-  echo "$@"
-  echo "USAGE: "
-  echo "  $usage"
-  exit 1
+  cmd="echo -n aws ec2 run-instances \
+    --region us-east-1 \
+    --placement 'AvailabilityZone=us-east-1b' \
+    --key-name aj \
+    --count "$count" \
+    --image-id ami-a43c8dde \
+    --instance-type "$instance_type" \
+    --security-group-ids "sg-4e80c734" "sg-4d80c737" \
+    --subnet-id subnet-2e369b67 \
+    --tag-specifications '\"ResourceType=instance,Tags=[{Key=role,Value=aj-test},{Key=instance_type,Value="$instance_type"},{Key=docker_method,Value="$docker_method"},{Key=cohort_size,Value="$count"}]\"' \
+    --client-token '$(cat /proc/sys/kernel/random/uuid)' \
+    --user-data fileb://data/user-data.multipart.gz"
+
+  # Note: --block-device-mappings can also be provided as a file, e.g. file://${label}/mapping.json
+  # To override the AMI default, use "NoDevice="
+  case "$instance_type" in
+  c3.2xlarge) ;;
+
+  c3.8xlarge)
+    # c3.8xlarge + instance store SSD
+    # FIXME
+    cmd="$cmd --block-device-mappings "NoDevice='""'""
+    ;;
+  c5.9xlarge)
+    # c5.9xlarge + ebs io1 volume
+    #echo --block-device-mappings "'DeviceName=/dev/sda1,VirtualName=/dev/xvdc,Ebs={DeleteOnTermination=true,SnapshotId=snap-05ddc125d72e3592d,VolumeSize=8,VolumeType=\"io1\",Iops=1000}'"
+    cmd=''"$cmd"' --block-device-mappings \"DeviceName=/dev/xvdc,VirtualName=/dev/xvdc,Ebs=\{DeleteOnTermination=true,VolumeSize=8,VolumeType=io1,Iops=100\}\"'
+    # FIXME: update docker-daemon.json because "Device /dev/xvdc not found"
+    ;;
+  r4.8xlarge)
+    # r4.8xlarge + in-memory docker
+    echo --block-device-mappings "NoDevice=\"\""
+    ;;
+  *)
+    die "Unknown instance type $instance_type"
+    ;;
+  esac
+  eval "$cmd"
 }
 
 make_cohort() {
   cohort_size="$1"
-  label="$2"
+  label="data"
+  instance_type="$2"
+  docker_method="$3"
 
-  make_multipart "$label"
+  make_multipart "$instance_type" "$docker_method" "$docker_volume_type"
+  #stderr_echo "EXITING" && exit
 
-  for i in $(seq 1 $cohort_size); do
-    run_instances_cmd="$(run_instances "$label")"
-    result="$(echo "$run_instances_cmd" | bash)"
-    instance_ip=$(echo "$result" | jq .Instances[].NetworkInterfaces[].PrivateIpAddresses[].PrivateIpAddress | tr -d '"')
-    instance_id=$(echo "$result" | jq .Instances[].InstanceId | tr -d '"')
-    mkdir -p "$label/instances/$instance_id"
-    echo "$result" >"$label/instances/$instance_id/$instance_ip.json"
-  done
-}
-
-get_instance_log() {
-  instance_id="$1"
-  aws ec2 get-console-output --instance-id "$instance_id" | jq '.Output' -r
-}
-
-wait_for_cohort_running() {
-  echo "Waiting for cohort to be running"
-  count="$1"
-  label="$2"
-  num=0
-  while true; do
-    num=$(echo "$(all_ids "$label")" | wc -l)
-    [ "$num" -ge "$count" ] && break
-    echo "have $num instances online, want $count, sleeping 5"
-    sleep 5
-  done
-}
-
-vm_is_provisioned() {
-  instance_id="$1"
-  sentinel="d4041f41adcc: Pull complete"
-  if [[ "$(get_instance_log "$instance_id")" == *"$sentinel"* ]]; then
-    return 0
-  fi
-  return 1
-}
-
-wait_for_cohort_provisioned() {
-  count="$1"
-  label="$2"
-  ids="$(all_ids "$label")"
-
-  done=""
-  done_count=0
-  while true; do
-    for iid in $ids; do
-      [[ "$done" == *"$iid" ]] && continue
-
-      if ! vm_is_provisioned "$iid"; then
-        echo "$iid not done yet"
-      else
-        echo "$iid is done! $(time_since_launch "$iid") since launch"
-        done="$done $iid"
-        done_count=$((done_count + 1))
-      fi
-    done
-
-    [ "$done_count" -ge "$count" ] && break
-
-    echo "Have $done_count provisioned, want $count, sleeping 5 (elapsed: $(date -d@$SECONDS -u +%H:%M:%S))"
-    sleep 5
-  done
-
-  echo "Done!"
-}
-
-time_since_launch() {
-  instance_id="$1"
-  now=$(date "+%s")
-  launch_time="$(aws ec2 describe-instances --instance-id "$instance_id" | jq .Reservations[].Instances[].LaunchTime | tr -d '"')"
-  result=$(($now - $(date --date="$launch_time" "+%s")))
-  echo "$(date -d@$result -u +%H:%M:%S)"
-}
-
-all_ids() {
-  label="$1"
-  ids=$(aws ec2 describe-instances --filters "Name=tag:role,Values=aj-test" \
-    'Name=instance-state-name,Values=running' \
-    "Name=tag:label,Values=$label" \
-    --query 'Reservations[].Instances[?LaunchTime>=`2017-10-10`][].{id: InstanceId, launched: LaunchTime, ip: PrivateIpAddress}' \
-    --output json |
-    jq '.[].id' | tr -d '"' | sort)
-
-  echo "$ids"
+  run_instances_cmd="$(run_instances "$instance_type" "$docker_method" "$cohort_size")"
+  echo "$run_instances_cmd"
+  echo "$run_instances_cmd" | bash >last_instance_run.json
 }
 
 main() {
   count="$1"
-  label="$2"
-  [ -z "$label" ] && die "Please provide a label for this test, corresponding to a directory containing LABEL/cloud-init.sh and LABEL/cloud-config.yml."
-  [ ! -d "$label" ] && die "Directory $label not found."
-  [ -z "$count" ] && die "Please provide a count of instances to create."
+  instance_type="$2"
+  docker_method="$3"
+  docker_volume_type="$4"
 
-  make_cohort "$count" "$label"
-  wait_for_cohort_running "$count" "$label"
-  wait_for_cohort_provisioned "$count" "$label"
+  [ -z "$count" ] && die "Please provide a count of instances to create."
+  [ -z "$instance_type" ] && die "Please provide an instance type as a second argument"
+  [ -z "$docker_method" ] && die "Please provide docker method (pull, import) as third argument"
+  [ -z "$docker_volume_type" ] && die "Please provide docker volume type (sic) as fourth argument (direct-lvm, overlay2)"
+  ensure_exists "data/docker-daemon-jsons/daemon-$docker_volume_type.json" "provided docker volume type --> config file doesn't exist: data/docker-daemon-jsons/$docker_volume_type"
+
+  make_cohort "$count" "$instance_type" "$docker_method" "$docker_volume_type"
 }
 
 main "$@"
