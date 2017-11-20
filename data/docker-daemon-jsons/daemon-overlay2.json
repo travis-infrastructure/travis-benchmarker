@@ -5,6 +5,7 @@
     "unix:///var/run/docker.sock"
   ],
   "icc": false,
+  "registry-mirrors": ["http://registry-shared-1.aws-us-east-1.travisci.net"],
   "storage-driver": "overlay2",
   "userns-remap": "default",
   "debug": true

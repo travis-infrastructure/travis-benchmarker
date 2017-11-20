@@ -77,7 +77,7 @@ __mark() {
   fi
 
 
-  #volume_type="$DOCKER_VOLUME_TYPE"
+  volume_type="$DOCKER_VOLUME_TYPE"
   total_time="$(tail -n1 /tmp/stopwatch | awk '{print $1}')"
   mem_total="$(free -hm | grep ^Mem: | awk '{print $2}')"
   boot_time="$(cat /var/lib/cloud/data/status.json | grep start | head -n1 | awk '{print $2}' | tr -d ',')"

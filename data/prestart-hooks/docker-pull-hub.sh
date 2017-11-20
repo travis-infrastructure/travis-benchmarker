@@ -1,7 +1,9 @@
 #!/usr/bin/env bash
 # vim:filetype=sh
 set -o errexit
-echo "pull" > /tmp/benchmark-docker-method
+#source /tmp/benchmark.env
+#cat /tmp/benchmark.env
+#echo "$DOCKER_METHOD" > /tmp/benchmark-docker-method
 
 main() {
   : "${RUNDIR:=/var/tmp/travis-run.d}"

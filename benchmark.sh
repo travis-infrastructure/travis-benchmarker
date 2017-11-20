@@ -89,7 +89,11 @@ EOF
   ensure_exists "$prestart_hook_file"
 
   docker_upstart="$(base64 -w 0 "$docker_upstart_file")"
-  docker_daemon_config="$(base64 -w 0 "$docker_daemon_config_file")"
+  if [[ "$docker_method" == "pull-hub" ]]; then
+    docker_daemon_config="$(sed 's/.*registry-mirrors.*//' "$docker_daemon_config_file" | base64 -w 0)"
+  else
+    docker_daemon_config="$(base64 -w 0 "$docker_daemon_config_file")"
+  fi
   docker_volume_setup="$(base64 -w 0 "$docker_volume_setup_file")"
   prestart_hook="$(base64 -w 0 "$prestart_hook_file")"
   benchmark_env="$(make_benchmark_env "$docker_method" "$docker_graph_driver" | base64 -w 0)"
@@ -199,9 +203,9 @@ main() {
   [ -z "$docker_graph_driver" ] && die "Please provide docker storage driver keyword as fourth argument."
 
   case "$docker_method" in
-  pull|import) ;;
+  pull-hub|pull-mirror|import) ;;
   *)
-    die "Invalid docker method '$docker_method' (expected: pull, import)"
+    die "Invalid docker method '$docker_method' (expected: pull-hub, pull-mirror, import)"
     ;;
   esac
 
