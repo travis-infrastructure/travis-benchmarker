@@ -24,6 +24,8 @@ def hello():
         data = read_results()
         if "table" in request.environ['CONTENT_TYPE']:
             return display_table()
+        if "spreadsheet" in request.environ['CONTENT_TYPE']:
+            return display_table().replace("|", "\t")
         return json.dumps(data)
 
 def read_results():
@@ -63,7 +65,7 @@ def display_table():
         row.update(data[iid])
         rows.append(row)
     rows = sort_rows(rows)
-    return tabulate(rows, headers='keys')
+    return tabulate(rows, headers='keys', tablefmt="pipe")
 
 def sort_rows(rows):
     times = [r['boot_time'] for r in rows]
