@@ -115,6 +115,7 @@ EOF
   prestart_hook="$(base64 -w 0 "$prestart_hook_file")"
   benchmark_env="$(make_benchmark_env "$docker_method" "$docker_graph_driver" "$cohort_size" | base64 -w 0)"
 
+  # shellcheck disable=SC2129
   sed "
     s@__DOCKER_METHOD__@$prestart_hook@
     s@__BENCHMARK_ENV__@$benchmark_env@
@@ -158,17 +159,18 @@ run_instances() {
   # subnet-2e369b67 => us-east-1b
   # subnet-addd3791 => us-east-1e (io1 not supported in this AZ)
 
-  cmd="echo -n aws ec2 run-instances \
+  cmd="aws ec2 run-instances \
     --region us-east-1 \
     --placement 'AvailabilityZone=us-east-1b' \
     --key-name aj \
-    --count "$count" \
+    --count '$count' \
     --image-id ami-a43c8dde \
-    --instance-type "$instance_type" \
-    --security-group-ids "sg-4e80c734" "sg-4d80c737" \
+    --instance-type '$instance_type' \
+    --security-group-ids sg-4e80c734 sg-4d80c737 \
     --subnet-id subnet-2e369b67 \
     --user-data fileb://data/user-data.multipart.gz \
-    --tag-specifications '\"ResourceType=instance,Tags=[{Key=role,Value=aj-test},{Key=instance_type,Value='$instance_type'},{Key=docker_method,Value='$docker_method'},{Key=cohort_size,Value='$count'}]\"'"
+    --tag-specifications "'"ResourceType=instance,Tags=[\{Key=role,Value=aj-test\},\{Key=instance_type,Value='$instance_type'\},\{Key=docker_method,Value='$docker_method'\},\{Key=cohort_size,Value='$count'\}]"'"
+  "
 
   # Note: --block-device-mappings can also be provided as a file, e.g. file://${label}/mapping.json
   # To override the AMI default, use "NoDevice="
@@ -194,7 +196,8 @@ run_instances() {
     die "Unknown instance type $instance_type"
     ;;
   esac
-  eval "$cmd"
+  # Run command and also display it
+  eval "echo $cmd"
 }
 
 make_cohort() {
