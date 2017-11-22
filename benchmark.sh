@@ -225,19 +225,18 @@ main() {
   [ -z "$docker_graph_driver" ] && die "Please provide docker graph driver as fourth argument."
 
   case "$docker_method" in
-  pull-hub|pull-mirror|import) ;;
+  pull-hub | pull-mirror | import) ;;
   *)
     die "Invalid docker method '$docker_method' (expected: pull-hub, pull-mirror, import)"
     ;;
   esac
 
   case "$docker_graph_driver" in
-  overlay2|devicemapper) ;;
+  overlay2 | devicemapper) ;;
   *)
     die "Invalid graph driver '$docker_graph_driver' (expected: overlay2, devicemapper)"
     ;;
   esac
-
 
   make_cohort "$count" "$instance_type" "$docker_method" "$docker_graph_driver"
 }

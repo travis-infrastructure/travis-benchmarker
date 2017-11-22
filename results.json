@@ -61,17 +61,18 @@
     }, 
     "i-00de246ab5ba33b12": {
         "boot_time": "11/22 17:15:06", 
+        "ci-finish": 434, 
         "ci-start": 12, 
         "cohort_size": "1", 
-        "filesystem": "", 
-        "graphdriver": "", 
-        "images": "0", 
+        "filesystem": "[Backing Filesystem extfs]", 
+        "graphdriver": "overlay2", 
+        "images": "3", 
         "instance_ipv4": "10.10.2.46", 
         "instance_type": "c3.2xlarge", 
         "mem": "14G", 
         "method": "import", 
-        "total": "", 
-        "volume_type": "__DOCKER_VOLUME_TYPE__"
+        "total": "6:45.94", 
+        "volume_type": "ext3?"
     }, 
     "i-00f7a5d0c8c73619a": {
         "boot_time": "11/20 23:22:41", 
@@ -986,17 +987,18 @@
     }, 
     "i-090fe6cfc07cd50f3": {
         "boot_time": "11/22 17:10:32", 
+        "ci-finish": 728, 
         "ci-start": 13, 
         "cohort_size": "1", 
-        "filesystem": "", 
-        "graphdriver": "", 
-        "images": "0", 
+        "filesystem": "[Backing Filesystem extfs]", 
+        "graphdriver": "overlay2", 
+        "images": "2", 
         "instance_ipv4": "10.10.2.69", 
         "instance_type": "c3.2xlarge", 
         "mem": "14G", 
         "method": "pull-mirror", 
-        "total": "", 
-        "volume_type": "__DOCKER_VOLUME_TYPE__"
+        "total": "11:42.91", 
+        "volume_type": "ext3?"
     }, 
     "i-091aa7f8d4f3f89b9": {
         "boot_time": "11/20 23:58:14", 
@@ -1118,17 +1120,18 @@
     }, 
     "i-0bea968bd7dcf44f7": {
         "boot_time": "11/22 17:16:29", 
+        "ci-finish": 484, 
         "ci-start": 11, 
         "cohort_size": "1", 
-        "filesystem": "", 
-        "graphdriver": "", 
-        "images": "0", 
+        "filesystem": "[Backing Filesystem extfs]", 
+        "graphdriver": "overlay2", 
+        "images": "3", 
         "instance_ipv4": "10.10.2.167", 
         "instance_type": "c3.2xlarge", 
         "mem": "14G", 
         "method": "import", 
-        "total": "", 
-        "volume_type": "__DOCKER_VOLUME_TYPE__"
+        "total": "7:38.73", 
+        "volume_type": "ext3?"
     }, 
     "i-0c5174f3fcc922186": {
         "boot_time": "11/21 05:17:15", 
