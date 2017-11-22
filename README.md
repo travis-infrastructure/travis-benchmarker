@@ -1,18 +1,25 @@
 # Benchmark EC2 instances
 
+This script automates starting a few EC2 instances that will pull two big
+(~10GB) Docker images. The goal is to find which combination of instance
+type/storage driver / etc. yields the faster setup time.
+
+The instances will report benchmark results to a local web server.
+
 ## Usage
 
 ### Start the listener and ngrok
 
-This will start a basic local webserver that will the instances will send benchmark data to:
+This will start a basic local webserver that the instances will send benchmark data to:
 
 - `docker build -t benchmarker .`
 - `docker run -ti -v $PWD:/src -p "80:5000" benchmarker`
 - `ngrok http 80` (replace `soulshake.ngrok.io` below with the domain ngrok provides you)
 
-You can test the listener as follows:
+You can test the listener in the following ways:
 
 - `curl -H "Content-Type: application/table" soulshake.ngrok.io`
+- `curl -H "Content-Type: application/json" soulshake.ngrok.io`
 
 ### Run the benchmark
 
@@ -48,6 +55,7 @@ Don't forget to start an ngrok listener to capture output from instances as they
 ## To do
 
 - get `FIXME` instance types working
+- provide a Compose file
 
 ## See also
 

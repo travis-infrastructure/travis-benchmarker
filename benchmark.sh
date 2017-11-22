@@ -1,11 +1,9 @@
 #!/bin/bash
 
-stderr_echo() {
-  echo >&2 "$@"
-}
-
 die() {
-  usage="$0 COUNT INSTANCE_TYPE DOCKER_METHOD GRAPH_DRIVER
+  echo "
+USAGE:
+  $0 COUNT INSTANCE_TYPE DOCKER_METHOD STORAGE_DRIVER
 
   Where:
 
@@ -24,12 +22,9 @@ die() {
   GRAPH_DRIVER:
     - overlay2
     - devicemapper
-  "
 
-  stderr_echo
-  stderr_echo "USAGE: "
-  stderr_echo "  $usage"
-  stderr_echo "$(tput setaf 1) $* $(tput sgr0)"
+$(tput setaf 1) $* $(tput sgr0)" >/dev/stderr
+
   exit 1
 }
 
@@ -48,7 +43,7 @@ make_multipart() {
   cohort_size="$4"
   label="data"
 
-  read -r -d '' HEADER <<-EOF
+  read -r -d '' HEADER <<EOF
 Content-Type: multipart/mixed; boundary="MIMEBOUNDARY"
 MIME-Version: 1.0
 --MIMEBOUNDARY
@@ -79,13 +74,34 @@ EOF
   ####################
   echo "$HEADER" >"$dest"
 
+  # # TODO: This will output a snippet on stdout
+  # write_file() {
+  #   local_path=$1
+  #   instance_path=$2
+  #   # ensure_exists $local_path
+  #   cat <<EOF
+  # - content: $(base64 -w0 $local_path)
+  #   encoding: b64
+  #   ...
+  #   path: $instance_path
+  # EOF
+  # }
+
+  # TODO?: generate the Docker config
+  # It's currently "half-generated", i.e. there's one config
+  # file for devicemapper, another for overlay2, *and then*
+  # the config gets patched. Might be better to either
+  # have it pregenerated for all scenarios, or generate it
+  # for all scenarios
+
   docker_upstart_file="data/upstarts/docker.conf"
   docker_daemon_config_file="data/docker-daemon-jsons/daemon-$docker_graph_driver.json"
   docker_volume_setup_file="data/volume-setups/$docker_graph_driver"
-  prestart_hook_file="$label/prestart-hooks/docker-$docker_method.sh"
+  prestart_hook_file="data/prestart-hooks/docker-$docker_method.sh"
 
   ensure_exists "$docker_upstart_file"
-  ensure_exists "$docker_daemon_config_file"
+  ensure_exists "$docker_daemon_config_file" \
+    "provided docker graph driver type '$docker_graph_driver' --> config file doesn't exist: data/docker-daemon-jsons/$docker_graph_driver"
   ensure_exists "$docker_volume_setup_file"
   ensure_exists "$prestart_hook_file"
 
@@ -99,20 +115,21 @@ EOF
   prestart_hook="$(base64 -w 0 "$prestart_hook_file")"
   benchmark_env="$(make_benchmark_env "$docker_method" "$docker_graph_driver" "$cohort_size" | base64 -w 0)"
 
-  sed "s@__DOCKER_METHOD__@$(echo "$prestart_hook")@; \
-    s@__BENCHMARK_ENV__@$(echo "$benchmark_env")@; \
-    s@__DOCKER_UPSTART__@$(echo "$docker_upstart")@; \
-    s@__DOCKER_DAEMON_JSON__@$(echo "$docker_daemon_config")@; \
-    s@__DOCKER_VOLUME_SETUP__@$(echo "$docker_volume_setup")@; \
-    s@__DOCKER_GRAPH_DRIVER__@$(echo "$docker_graph_driver")@" \
-    "${label}/cloud-config.yml" \
+  sed "
+    s@__DOCKER_METHOD__@$prestart_hook@
+    s@__BENCHMARK_ENV__@$benchmark_env@
+    s@__DOCKER_UPSTART__@$docker_upstart@
+    s@__DOCKER_DAEMON_JSON__@$docker_daemon_config@
+    s@__DOCKER_VOLUME_SETUP__@$docker_volume_setup@
+    s@__DOCKER_GRAPH_DRIVER__@$docker_graph_driver@
+    " "${label}/cloud-config.yml" \
     >>"$dest"
 
   ##################
   ### cloud-init ###
   ##################
   echo "$BOUNDARY" >>"$dest"
-  echo "$(cat "${label}/cloud-init.sh")" >>"$dest"
+  cat data/cloud-init.sh >>"$dest"
   echo "$FOOTER" >>"$dest"
 
   gzip -f "$dest"
@@ -124,11 +141,12 @@ make_benchmark_env() {
   cohort_size="$3"
   docker_config_file_dest="/etc/docker/daemon-${docker_graph_driver}.json"
 
-  sed "s@__DOCKER_METHOD__@$docker_method@; \
-    s@__DOCKER_CONFIG__@$docker_config_file_dest@;
-    s@__COHORT_SIZE__@$(echo "$cohort_size")@; \
-    s@__DOCKER_GRAPH_DRIVER__@$docker_graph_driver@" \
-    "${label}/benchmark.env"
+  sed "
+    s@__DOCKER_METHOD__@$docker_method@
+    s@__DOCKER_CONFIG__@$docker_config_file_dest@
+    s@__COHORT_SIZE__@$cohort_size@
+    s@__DOCKER_GRAPH_DRIVER__@$docker_graph_driver@
+    " "${label}/benchmark.env"
 }
 
 run_instances() {
@@ -149,9 +167,8 @@ run_instances() {
     --instance-type "$instance_type" \
     --security-group-ids "sg-4e80c734" "sg-4d80c737" \
     --subnet-id subnet-2e369b67 \
-    --tag-specifications '\"ResourceType=instance,Tags=[{Key=role,Value=aj-test},{Key=instance_type,Value="$instance_type"},{Key=docker_method,Value="$docker_method"},{Key=cohort_size,Value="$count"}]\"' \
-    --client-token '$(cat /proc/sys/kernel/random/uuid)' \
-    --user-data fileb://data/user-data.multipart.gz"
+    --user-data fileb://data/user-data.multipart.gz \
+    --tag-specifications '\"ResourceType=instance,Tags=[{Key=role,Value=aj-test},{Key=instance_type,Value='$instance_type'},{Key=docker_method,Value='$docker_method'},{Key=cohort_size,Value='$count'}]\"'"
 
   # Note: --block-device-mappings can also be provided as a file, e.g. file://${label}/mapping.json
   # To override the AMI default, use "NoDevice="
@@ -187,7 +204,6 @@ make_cohort() {
   docker_method="$3"
 
   make_multipart "$instance_type" "$docker_method" "$docker_graph_driver" "$cohort_size"
-  #stderr_echo "EXITING" && exit
 
   run_instances_cmd="$(run_instances "$instance_type" "$docker_method" "$cohort_size")"
   echo "$run_instances_cmd"
@@ -219,8 +235,6 @@ main() {
     ;;
   esac
 
-  ensure_exists "data/docker-daemon-jsons/daemon-$docker_graph_driver.json" \
-    "provided docker graph driver type '$docker_graph_driver' --> config file doesn't exist: data/docker-daemon-jsons/$docker_graph_driver"
 
   make_cohort "$count" "$instance_type" "$docker_method" "$docker_graph_driver"
 }

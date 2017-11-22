@@ -13,13 +13,12 @@ app = Flask(__name__)
 @app.route("/", methods=['GET', 'POST'])
 def hello():
     if request.method == 'POST':
-        try:
-            data = json.loads(request.data)
-        except ValueError as e:
-            from IPython import embed; embed()
+        data = json.loads(request.data)
         write_results(data)
         return "Recorded: {}\n".format(data)
 
+    """
+<<<<<<< Updated upstream
     if request.method == 'GET':
         data = read_results()
         if "table" in request.environ['CONTENT_TYPE']:
@@ -27,11 +26,17 @@ def hello():
         if "spreadsheet" in request.environ['CONTENT_TYPE']:
             return display_table().replace("|", "\t")
         return json.dumps(data)
+=======
+    """
+    data = read_results()
+    # FIXME: reverse logic here to show table by default
+    if "table" in request.environ['CONTENT_TYPE']:
+        return display_table()
+    return json.dumps(data)
 
 def read_results():
     with open("results.json", "r") as f:
-        existing = f.read()
-    return json.loads(existing)
+        return json.load(f)
 
 def write_results(new):
     existing = read_results()
@@ -43,13 +48,31 @@ def write_results(new):
         existing[instance_id] = new
 
     with open("results.json", "w") as f:
-        f.write(json.dumps(existing, indent=4, sort_keys=True))
+        json.dump(existing, f, indent=4, sort_keys=True)
 
 def setup(results_filename="results.json"):
     if not os.path.isfile(results_filename):
         with open(results_filename, "a") as f:
             f.write("{}")
 
+"""
+In [59]: print(tabulate.tabulate([yoyo] + people, headers="firstrow"))
+  Age  Name
+-----  -------
+   12  bob
+   15  charles
+   20  diana
+   10  alice
+
+In [60]: [yoyo] + people
+Out[60]:
+[OrderedDict([('age', 'Age'), ('name', 'Name')]),
+ {'age': 12, 'name': 'bob'},
+ {'age': 15, 'name': 'charles'},
+ {'age': 20, 'name': 'diana'},
+ {'age': 10, 'name': 'alice'}]
+
+"""
 def display_table():
     data = read_results()
     rows = []
@@ -72,10 +95,9 @@ def sort_rows(rows):
     ret_rows = []
     times = [arrow.get(time, 'MM/DD HH:mm:ss') for time in times]
     times.sort()
+    # sorted(people, key=lambda p: p['age'])
     for time in times:
         result = [x for x in rows if arrow.get(x['boot_time'], 'MM/DD HH:mm:ss') == time]
-        if len(result) < 1:
-            from IPython import embed; embed()
         ret_rows.append(result[0])
         rows.remove(result[0])
     return ret_rows
