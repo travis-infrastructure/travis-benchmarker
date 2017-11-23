@@ -20,7 +20,8 @@ def hello():
 
     data = read_results()
     if "table" in request.environ.get('CONTENT_TYPE', ''):
-        return display_table()
+        sort_keys = request.environ.get('HTTP_X_SORT_KEYS', '').split(",")
+        return display_table(sort_keys=sort_keys) if sort_keys != [""] else display_table()
     return json.dumps(data)
 
 def read_results():
@@ -62,9 +63,11 @@ Out[60]:
  {'age': 10, 'name': 'alice'}]
 
 """
-def display_table():
+def display_table(sort_keys=["boot_time"]):
     data = read_results()
     rows = []
+
+    # Define header aliases to save screen space when printing table
     headers = OrderedDict()
     headers["boot_time"] = "boot"
     headers["instance_id"] = "Instance ID"
@@ -83,21 +86,33 @@ def display_table():
     for iid in data:
         row = {"instance_id": iid}
         row.update(data[iid])
-        #row = format_row(row)
         rows.append(row)
-    rows = sorted(rows, key=lambda x: x["boot_time"])
-    rows = sorted(rows, key=lambda x: x.get("ci-finish", 0))
+
+    # Sort by X_SORT_KEYS header, if present
+    for key in sort_keys:
+        # Allow sorting by column alias
+        if key in headers.values():
+            key = headers.keys()[headers.values().index(key)]
+        if key in headers.keys():
+            rows = sorted(rows, key=lambda x: x[key])
+        else:
+            print("can't sort by {}, not in {}".format(key, headers))
     rows = [format_row(row) for row in rows]
     return tabulate([headers] + rows + [headers], headers="firstrow", tablefmt="pipe")
 
 def format_row(row):
+    # row["OK"] will be "NOK" until we've determined the instance was successfully bootstrapped
+    # So a value of "OK" means bootstrap succeeded.
     if row["OK"] == "OK":
         row["OK"] = click.style(row["OK"], fg='green')
         return row
 
+    # If row["OK"] is still "NOK", it means bootstrap is either incomplete or failed somehow.
+    # If row["total"] is present, it means bootstrap has finished, so mark it as failed.
     if row["total"]:
         row["instance_ipv4"] = click.style(row["instance_ipv4"], fg='red')
         row["OK"] = click.style(row["OK"], fg='red')
+    # Otherwise, mark it as pending.
     else:
         row["OK"] = click.style(row["OK"], fg='yellow')
     return row
