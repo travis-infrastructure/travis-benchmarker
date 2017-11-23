@@ -6,6 +6,7 @@ import json
 import os
 import sys
 import arrow
+import click
 from tabulate import tabulate
 
 app = Flask(__name__)
@@ -17,20 +18,8 @@ def hello():
         write_results(data)
         return "Recorded: {}\n".format(data)
 
-    """
-<<<<<<< Updated upstream
-    if request.method == 'GET':
-        data = read_results()
-        if "table" in request.environ['CONTENT_TYPE']:
-            return display_table()
-        if "spreadsheet" in request.environ['CONTENT_TYPE']:
-            return display_table().replace("|", "\t")
-        return json.dumps(data)
-=======
-    """
     data = read_results()
-    # FIXME: reverse logic here to show table by default
-    if "table" in request.environ['CONTENT_TYPE']:
+    if "table" in request.environ.get('CONTENT_TYPE', ''):
         return display_table()
     return json.dumps(data)
 
@@ -76,31 +65,28 @@ Out[60]:
 def display_table():
     data = read_results()
     rows = []
+    headers = OrderedDict()
+    headers["instance_id"] = "Instance ID"
+    headers["instance_ipv4"] = "ipv4"
+    headers["ci-start"] = "start"
+    headers["ci-finish"] = "finish"
+    headers["total"] = click.style("total", bold=True)
+    headers["cohort_size"] = "count"
+    headers["images"] = "img#"
+    headers["OK"] = "ok?"
+    headers["instance_type"] = "type"
+    headers["mem"] = "mem"
+    headers["volume_type"] = "volume type"
+    headers["method"] = "method"
+    headers["boot_time"] = "boot"
+
     for iid in data:
-        row = OrderedDict()
-        row["Instance ID"] = iid
-        row["instance_ipv4"] = ""
-        row["mem"] = ""
-        row["method"], row["total"] = "", ""
-        row["instance_type"] = ""
-        row["ci-start"], row["ci-finish"] = "", ""
-        row["volume_type"] = ""
+        row = {"instance_id": iid}
         row.update(data[iid])
         rows.append(row)
-    rows = sort_rows(rows)
-    return tabulate(rows, headers='keys', tablefmt="pipe")
-
-def sort_rows(rows):
-    times = [r['boot_time'] for r in rows]
-    ret_rows = []
-    times = [arrow.get(time, 'MM/DD HH:mm:ss') for time in times]
-    times.sort()
-    # sorted(people, key=lambda p: p['age'])
-    for time in times:
-        result = [x for x in rows if arrow.get(x['boot_time'], 'MM/DD HH:mm:ss') == time]
-        ret_rows.append(result[0])
-        rows.remove(result[0])
-    return ret_rows
+    #rows = sorted(rows, key=lambda x: x["boot_time"])
+    rows = sorted(rows, key=lambda x: x["ci-finish"])
+    return tabulate([headers] + rows, headers="firstrow", tablefmt="pipe")
 
 if __name__ == "__main__":
     setup()

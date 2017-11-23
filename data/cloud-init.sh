@@ -6,11 +6,8 @@ shopt -s nullglob
 set -x
 
 __extra() {
-  run_d="$1"
-
   # Use a fake queue
   sed -i 's/builds.ec2/builds.fake/' "/etc/default/travis-worker"
-
 
   sed -i 's/#force_color_prompt=yes/force_color_prompt=yes/' /root/.bashrc
 
@@ -22,15 +19,7 @@ __post_extra() {
   # get docker root dir (docker info)
   # root_dir="$(docker info --format '{{ json .DockerRootDir }}')"
   # lsblk --output NAME,KNAME,FSTYPE,MOUNTPOINT,SIZE,TYPE
-  logger "======================= in __post_extra ======================="
 
-  if blkid /dev/xvdc | grep LVM; then
-    volume_type="direct-lvm"
-  else
-    volume_type="ext3\?"
-  fi
-
-  sed -i "s/__DOCKER_VOLUME_TYPE__/$volume_type/" /tmp/benchmark.env
   # devicemapper:
   # # blkid /dev/xvdc
     # /dev/xvdc: UUID="vxtMwc-k4vv-dskD-bu3V-e9za-sM1Q-fgf4CZ" TYPE="LVM2_member"
@@ -38,10 +27,32 @@ __post_extra() {
   # overlay2:
   # # blkid /dev/xvdc
     # /dev/xvdc: UUID="aa75b9db-5e39-4bb9-99e3-763224f1de98" SEC_TYPE="ext2" TYPE="ext3"
+  if blkid /dev/xvdc | grep LVM; then
+    volume_type="direct-lvm"
+  else
+    volume_type="ext3\?"
+  fi
+
+  sed -i "s/__DOCKER_VOLUME_TYPE__/$volume_type/" /tmp/benchmark.env
 
   cat /tmp/benchmark.env >>/etc/default/travis-worker-cloud-init
   source /etc/default/travis-worker-cloud-init
   logger "======================= done with __post_extra ======================="
+}
+
+__check_ok() {
+  if docker images | grep '0B$' >/dev/null; then
+    echo "NOK"
+    return 1
+  fi
+  image_count="$(docker images | egrep 'GB|MB' | awk '{print $3}' | sort -u | wc -l)"
+  if [ "$image_count" -ne 3 ]; then
+    echo "NOK"
+    return 1
+  fi
+
+  echo "OK"
+  return 0
 }
 
 __uptime_in_secs() {
@@ -93,6 +104,7 @@ __mark() {
   data='{"instance_id":'\"$instance_id\"',"instance_ipv4":'\"$instance_ipv4\"','\"$action\"':'$now',"method":'\"$DOCKER_METHOD\"','
   data=''$data'"boot_time":'\"$boot_time\"',"instance_type":'\"$instance_type\"',"graphdriver":'\"$graphdriver\"','
   data=''$data'"volume_type":'\"$volume_type\"',"filesystem":'\"$filesystem\"',"total":'\"$total_time\"',"mem":'\"$mem_total\"','
+  data=''$data'"OK":'\"$(__check_ok)\"','
   data=''$data'"images":'\"$image_count\"',"cohort_size":'\"$cohort_size\"'}'
 
   __post_to_ngrok "$data"

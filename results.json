@@ -330,17 +330,18 @@
     }, 
     "i-03837c2b23de8d7cd": {
         "boot_time": "11/22 17:18:01", 
+        "ci-finish": 640, 
         "ci-start": 13, 
         "cohort_size": "1", 
-        "filesystem": "", 
-        "graphdriver": "", 
-        "images": "0", 
+        "filesystem": "[Backing Filesystem xfs]", 
+        "graphdriver": "devicemapper", 
+        "images": "2", 
         "instance_ipv4": "10.10.2.192", 
         "instance_type": "c3.2xlarge", 
         "mem": "14G", 
         "method": "pull-hub", 
-        "total": "", 
-        "volume_type": "__DOCKER_VOLUME_TYPE__"
+        "total": "10:15.12", 
+        "volume_type": "direct-lvm"
     }, 
     "i-038f42b94a6f5aac6": {
         "boot_time": "11/21 05:17:13", 
@@ -1032,17 +1033,18 @@
     }, 
     "i-093a89e00a1e69fc3": {
         "boot_time": "11/22 17:21:11", 
+        "ci-finish": 640, 
         "ci-start": 14, 
         "cohort_size": "1", 
-        "filesystem": "", 
-        "graphdriver": "", 
-        "images": "0", 
+        "filesystem": "[Backing Filesystem xfs]", 
+        "graphdriver": "devicemapper", 
+        "images": "2", 
         "instance_ipv4": "10.10.2.175", 
         "instance_type": "c3.2xlarge", 
         "mem": "14G", 
         "method": "pull-hub", 
-        "total": "", 
-        "volume_type": "__DOCKER_VOLUME_TYPE__"
+        "total": "10:14.05", 
+        "volume_type": "direct-lvm"
     }, 
     "i-095c98809216153a0": {
         "boot_time": "11/20 23:58:21", 
@@ -1101,6 +1103,22 @@
         "mem": "14G", 
         "method": "import", 
         "total": "4:51.76", 
+        "volume_type": "direct-lvm"
+    }, 
+    "i-0ae8940c21b4e7dbc": {
+        "OK": "OK", 
+        "boot_time": "11/22 17:54:05", 
+        "ci-finish": 601, 
+        "ci-start": 13, 
+        "cohort_size": "1", 
+        "filesystem": "[Backing Filesystem xfs]", 
+        "graphdriver": "devicemapper", 
+        "images": "3", 
+        "instance_ipv4": "10.10.2.55", 
+        "instance_type": "c3.2xlarge", 
+        "mem": "14G", 
+        "method": "import", 
+        "total": "9:31.30", 
         "volume_type": "direct-lvm"
     }, 
     "i-0ba9e31792f98142d": {
@@ -1270,17 +1288,18 @@
     }, 
     "i-0d96e16d7fa225c72": {
         "boot_time": "11/22 17:16:44", 
+        "ci-finish": 825, 
         "ci-start": 14, 
         "cohort_size": "1", 
-        "filesystem": "", 
-        "graphdriver": "", 
-        "images": "0", 
+        "filesystem": "[Backing Filesystem xfs]", 
+        "graphdriver": "devicemapper", 
+        "images": "3", 
         "instance_ipv4": "10.10.2.5", 
         "instance_type": "c3.2xlarge", 
         "mem": "14G", 
         "method": "import", 
-        "total": "", 
-        "volume_type": "__DOCKER_VOLUME_TYPE__"
+        "total": "13:14.14", 
+        "volume_type": "direct-lvm"
     }, 
     "i-0dcb75fb22d1d9dd8": {
         "boot_time": "11/21 05:17:05", 
@@ -1295,6 +1314,22 @@
         "mem": "14G", 
         "method": "pull-mirror", 
         "total": "13:32.55", 
+        "volume_type": "direct-lvm"
+    }, 
+    "i-0e1bcf34a3f23c7da": {
+        "OK": "OK", 
+        "boot_time": "11/22 17:54:03", 
+        "ci-finish": 624, 
+        "ci-start": 13, 
+        "cohort_size": "1", 
+        "filesystem": "[Backing Filesystem xfs]", 
+        "graphdriver": "devicemapper", 
+        "images": "2", 
+        "instance_ipv4": "10.10.2.112", 
+        "instance_type": "c3.2xlarge", 
+        "mem": "14G", 
+        "method": "pull-hub", 
+        "total": "9:58.12", 
         "volume_type": "direct-lvm"
     }, 
     "i-0e1ddfd6bdae1a159": {
@@ -1329,17 +1364,18 @@
     }, 
     "i-0e66374506abe4268": {
         "boot_time": "11/22 17:17:25", 
+        "ci-finish": 484, 
         "ci-start": 12, 
         "cohort_size": "1", 
-        "filesystem": "", 
-        "graphdriver": "", 
-        "images": "0", 
+        "filesystem": "[Backing Filesystem xfs]", 
+        "graphdriver": "devicemapper", 
+        "images": "3", 
         "instance_ipv4": "10.10.2.134", 
         "instance_type": "c3.2xlarge", 
         "mem": "14G", 
         "method": "import", 
-        "total": "", 
-        "volume_type": "__DOCKER_VOLUME_TYPE__"
+        "total": "7:36.11", 
+        "volume_type": "direct-lvm"
     }, 
     "i-0e9f65de44a4165ba": {
         "boot_time": "11/20 23:22:33", 
