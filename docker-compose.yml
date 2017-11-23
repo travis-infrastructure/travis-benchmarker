@@ -1,0 +1,12 @@
+version: "3"
+
+services:
+  listener:
+    build: .
+    volumes:
+      - .:/src
+  ngrok:
+    build: ngrok
+    command: ["ngrok", "http", "-subdomain", "soulshake", "listener:5000"]
+    volumes:
+      - $HOME/.ngrok2/:/root/.ngrok2/
