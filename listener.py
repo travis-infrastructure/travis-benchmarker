@@ -66,6 +66,7 @@ def display_table():
     data = read_results()
     rows = []
     headers = OrderedDict()
+    headers["boot_time"] = "boot"
     headers["instance_id"] = "Instance ID"
     headers["instance_ipv4"] = "ipv4"
     headers["ci-start"] = "start"
@@ -78,15 +79,28 @@ def display_table():
     headers["mem"] = "mem"
     headers["volume_type"] = "volume type"
     headers["method"] = "method"
-    headers["boot_time"] = "boot"
 
     for iid in data:
         row = {"instance_id": iid}
         row.update(data[iid])
+        #row = format_row(row)
         rows.append(row)
-    #rows = sorted(rows, key=lambda x: x["boot_time"])
-    rows = sorted(rows, key=lambda x: x["ci-finish"])
-    return tabulate([headers] + rows, headers="firstrow", tablefmt="pipe")
+    rows = sorted(rows, key=lambda x: x["boot_time"])
+    rows = sorted(rows, key=lambda x: x.get("ci-finish", 0))
+    rows = [format_row(row) for row in rows]
+    return tabulate([headers] + rows + [headers], headers="firstrow", tablefmt="pipe")
+
+def format_row(row):
+    if row["OK"] == "OK":
+        row["OK"] = click.style(row["OK"], fg='green')
+        return row
+
+    if row["total"]:
+        row["instance_ipv4"] = click.style(row["instance_ipv4"], fg='red')
+        row["OK"] = click.style(row["OK"], fg='red')
+    else:
+        row["OK"] = click.style(row["OK"], fg='yellow')
+    return row
 
 if __name__ == "__main__":
     setup()

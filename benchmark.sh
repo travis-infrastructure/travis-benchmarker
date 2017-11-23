@@ -179,8 +179,8 @@ run_instances() {
 
   c3.8xlarge)
     # c3.8xlarge + instance store SSD
-    # FIXME
-    cmd="$cmd --block-device-mappings "NoDevice='""'""
+    # FIXME        ^
+    #cmd=''$cmd' --block-device-mappings "NoDevice=\"\""'
     ;;
   c5.9xlarge)
     # c5.9xlarge + ebs io1 volume
@@ -190,7 +190,7 @@ run_instances() {
     ;;
   r4.8xlarge)
     # r4.8xlarge + in-memory docker
-    echo --block-device-mappings "NoDevice=\"\""
+    cmd=''"$cmd"' --block-device-mappings "NoDevice=\"\""'
     ;;
   *)
     die "Unknown instance type $instance_type"

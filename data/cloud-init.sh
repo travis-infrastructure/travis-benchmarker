@@ -70,6 +70,7 @@ __prestart_hook() {
     apt install -y lzop
   fi
   $TIME --append $TIME_ARGS $TIME_FORMAT /var/tmp/travis-run.d/travis-worker-prestart-hook
+  docker pull travisci/worker:v3.3.1-20-g72eaa22
 }
 
 __mark() {
