@@ -87,30 +87,16 @@ EOF
   # EOF
   # }
 
-  # TODO?: generate the Docker config
-  # It's currently "half-generated", i.e. there's one config
-  # file for devicemapper, another for overlay2, *and then*
-  # the config gets patched. Might be better to either
-  # have it pregenerated for all scenarios, or generate it
-  # for all scenarios
-
   docker_upstart_file="data/upstarts/docker.conf"
-  docker_daemon_config_file="data/docker-daemon-jsons/daemon-$docker_graph_driver.json"
   docker_volume_setup_file="data/volume-setups/$docker_graph_driver"
   prestart_hook_file="data/prestart-hooks/docker-$docker_method.sh"
 
   ensure_exists "$docker_upstart_file"
-  ensure_exists "$docker_daemon_config_file" \
-    "provided docker graph driver type '$docker_graph_driver' --> config file doesn't exist: data/docker-daemon-jsons/$docker_graph_driver"
   ensure_exists "$docker_volume_setup_file"
   ensure_exists "$prestart_hook_file"
 
   docker_upstart="$(base64 -w 0 "$docker_upstart_file")"
-  if [[ "$docker_method" == "pull-hub" ]]; then
-    docker_daemon_config="$(sed 's/.*registry-mirrors.*//' "$docker_daemon_config_file" | base64 -w 0)"
-  else
-    docker_daemon_config="$(base64 -w 0 "$docker_daemon_config_file")"
-  fi
+  docker_daemon_config="$(make_docker_daemon_json "$docker_graph_driver" "$docker_method" | base64 -w 0)"
   docker_volume_setup="$(base64 -w 0 "$docker_volume_setup_file")"
   prestart_hook="$(base64 -w 0 "$prestart_hook_file")"
   benchmark_env="$(make_benchmark_env "$docker_method" "$docker_graph_driver" "$cohort_size" | base64 -w 0)"
@@ -134,6 +120,57 @@ EOF
   echo "$FOOTER" >>"$dest"
 
   gzip -f "$dest"
+}
+
+make_docker_daemon_json() {
+  docker_graph_driver="$1"
+  docker_method="$2"
+
+  docker_daemon_config='
+  "data-root": "/mnt/docker",
+  "hosts": [
+    "tcp://127.0.0.1:4243",
+    "unix:///var/run/docker.sock"
+  ],
+  "icc": false,
+  "insecure-registries": [
+    "10.0.0.0/8"
+  ],
+  "max-concurrent-downloads": 2,
+  "registry-mirrors": ["http://registry-shared-1.aws-us-east-1.travisci.net"],
+  "userns-remap": "default",
+  "debug": true,
+'
+
+  case "$docker_graph_driver" in
+  devicemapper)
+    docker_daemon_config=''$docker_daemon_config'
+  "storage-driver": "devicemapper",
+  "storage-opts": [
+    "dm.basesize=12G",
+    "dm.datadev=/dev/direct-lvm/data",
+    "dm.metadatadev=/dev/direct-lvm/metadata",
+    "dm.fs=xfs"
+  ]
+'
+    ;;
+  overlay2)
+    docker_daemon_config=''$docker_daemon_config'
+  "storage-driver": "overlay2"
+'
+  ;;
+  *)
+    die "Couldn't make docker daemon json"
+    ;;
+  esac
+
+  docker_daemon_config="{$docker_daemon_config}"
+
+  if [[ "$docker_method" == "pull-hub" ]]; then
+    docker_daemon_config="$(echo "$docker_daemon_config" | sed 's/.*registry-mirrors.*//')"
+  fi
+
+  echo "$docker_daemon_config"
 }
 
 make_benchmark_env() {
