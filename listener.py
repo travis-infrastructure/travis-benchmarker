@@ -19,10 +19,10 @@ def hello():
         return "Recorded: {}\n".format(data)
 
     data = read_results()
-    if "table" in request.environ.get('CONTENT_TYPE', ''):
-        sort_keys = request.environ.get('HTTP_X_SORT_KEYS', '').split(",")
-        return display_table(sort_keys=sort_keys) if sort_keys != [""] else display_table()
-    return json.dumps(data)
+    if "json" in request.environ.get('CONTENT_TYPE', ''):
+        return json.dumps(data)
+    sort_keys = request.environ.get('HTTP_X_SORT_KEYS', '').split(",")
+    return display_table(sort_keys=sort_keys) if sort_keys != [""] else display_table()
 
 def read_results():
     with open("results.json", "r") as f:
@@ -45,24 +45,6 @@ def setup(results_filename="results.json"):
         with open(results_filename, "a") as f:
             f.write("{}")
 
-"""
-In [59]: print(tabulate.tabulate([yoyo] + people, headers="firstrow"))
-  Age  Name
------  -------
-   12  bob
-   15  charles
-   20  diana
-   10  alice
-
-In [60]: [yoyo] + people
-Out[60]:
-[OrderedDict([('age', 'Age'), ('name', 'Name')]),
- {'age': 12, 'name': 'bob'},
- {'age': 15, 'name': 'charles'},
- {'age': 20, 'name': 'diana'},
- {'age': 10, 'name': 'alice'}]
-
-"""
 def display_table(sort_keys=["boot_time"]):
     data = read_results()
     rows = []
