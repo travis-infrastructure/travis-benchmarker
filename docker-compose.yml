@@ -2,9 +2,9 @@ version: "3"
 
 services:
   listener:
-    build: .
+    build: listener
     volumes:
-      - .:/src
+      - ./listener:/src
   ngrok:
     build: ngrok
     command: ["ngrok", "http", "-subdomain", "soulshake", "listener:5000"]

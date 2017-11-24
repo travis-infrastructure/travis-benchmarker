@@ -10,16 +10,16 @@ The instances will report benchmark results to a local web server.
 
 ### Start the listener and ngrok
 
-This will start a basic local webserver that the instances will send benchmark data to:
+This will start a basic local webserver to which the instances will send benchmark data:
 
-- `docker build -t benchmarker .`
-- `docker run -ti -v $PWD:/src -p "80:5000" benchmarker`
-- `ngrok http 80` (replace `soulshake.ngrok.io` below with the domain ngrok provides you)
+- `docker-compose up`
 
 You can test the listener in the following ways:
 
-- `curl -H "Content-Type: application/table" soulshake.ngrok.io`
-- `curl -H "Content-Type: application/json" soulshake.ngrok.io`
+- `curl soulshake.ngrok.io`
+- For JSON: `curl -H "Content-Type: application/json" soulshake.ngrok.io`
+
+`soulshake.ngrok.io` is hardcoded in `docker-compose.yml`. Remove or replace with your own ngrok subdomain.
 
 ### Run the benchmark
 
@@ -46,16 +46,15 @@ Where:
 This will:
 
 - look in the `data/` subdirectory for `cloud-config.yml` and `cloud-init.sh`
-- manipulate these files according to the `DOCKER_METHOD` and write to `data/user-data.multipart`
+- manipulate these files and generate a Docker config json according to the `DOCKER_METHOD` and write to `data/user-data.multipart`
 - compress `data/user-data.multipart` into `data/user-data.multipart.gz` to be passed as userdata
 - spin up `COUNT` instances with the compressed userdata
 
-Don't forget to start an ngrok listener to capture output from instances as they complete cloud-init. (This is a workaround for the unreliability of `aws ec2 get-console-output` for benchmarking purposes.)
+Don't forget to run `docker-compose up` to start an ngrok listener to capture output from instances as they complete cloud-init. (This is a workaround for the unreliability of `aws ec2 get-console-output` for benchmarking purposes.)
 
 ## To do
 
 - get `FIXME` instance types working
-- provide a Compose file
 
 ## See also
 

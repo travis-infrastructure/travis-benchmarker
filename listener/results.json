@@ -1,0 +1,17 @@
+{
+    "i-055ffb9e85cba03c4": {
+        "OK": "OK",
+        "boot_time": "11/24 18:26:05",
+        "ci-finish": 500,
+        "cohort_size": "1",
+        "filesystem": "[Backing Filesystem extfs]",
+        "graphdriver": "overlay2",
+        "images": "3",
+        "instance_ipv4": "10.10.2.92",
+        "instance_type": "c3.2xlarge",
+        "mem": "14G",
+        "method": "pull-mirror",
+        "total": "7:51.80",
+        "volume_type": "ext3?"
+    }
+}
