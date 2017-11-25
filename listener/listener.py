@@ -60,10 +60,12 @@ def display_table(sort_keys=["boot_time"]):
     headers["cohort_size"] = "count"
     headers["images"] = "img#"
     headers["OK"] = "ok?"
+    headers["method"] = "method"
     headers["instance_type"] = "type"
     headers["mem"] = "mem"
+    headers["graphdriver"] = "graphdriver"
     headers["volume_type"] = "volume type"
-    headers["method"] = "method"
+    headers["filesystem"] = "filesystem"
 
     for iid in data:
         row = {"instance_id": iid}
@@ -76,7 +78,7 @@ def display_table(sort_keys=["boot_time"]):
         if key in headers.values():
             key = headers.keys()[headers.values().index(key)]
         if key in headers.keys():
-            rows = sorted(rows, key=lambda x: x[key])
+            rows = sorted(rows, key=lambda x: x.get(key, ''))
         else:
             print("can't sort by {}, not in {}".format(key, headers))
     rows = [format_row(row) for row in rows]
