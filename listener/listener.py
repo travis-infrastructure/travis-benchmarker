@@ -76,9 +76,11 @@ def display_table(sort_keys=["boot_time"]):
     for key in sort_keys:
         # Allow sorting by column alias
         if key in headers.values():
-            key = headers.keys()[headers.values().index(key)]
+            keys = [x for x in headers.keys()]
+            values = [x for x in headers.values()]
+            key = keys[values.index(key)]
         if key in headers.keys():
-            rows = sorted(rows, key=lambda x: x.get(key, ''))
+            rows = sorted(rows, key=lambda x: x.get(key, 0))
         else:
             print("can't sort by {}, not in {}".format(key, headers))
     rows = [format_row(row) for row in rows]
