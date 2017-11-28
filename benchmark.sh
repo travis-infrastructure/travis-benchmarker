@@ -203,11 +203,10 @@ run_instances() {
     --count '$count' \
     --image-id ami-a43c8dde \
     --instance-type '$instance_type' \
-    --security-group-ids sg-4e80c734 sg-4d80c737 \
+    --security-group-ids sg-acad2ed9 sg-48d59c32 \
     --subnet-id subnet-2e369b67 \
     --user-data fileb://data/user-data.multipart.gz \
-    --tag-specifications "'"ResourceType=instance,Tags=[\{Key=role,Value=aj-test\},\{Key=instance_type,Value='$instance_type'\},\{Key=docker_method,Value='$docker_method'\},\{Key=cohort_size,Value='$count'\}]"'"
-  "
+    --tag-specifications "'"ResourceType=instance,Tags=[\{Key=role,Value=aj-test\},\{Key=instance_type,Value='$instance_type'\},\{Key=docker_method,Value='$docker_method'\},\{Key=cohort_size,Value='$count'\}]"'""
 
   # Note: --block-device-mappings can also be provided as a file, e.g. file://${label}/mapping.json
   # To override the AMI default, use "NoDevice="
@@ -217,13 +216,13 @@ run_instances() {
   c3.8xlarge)
     # c3.8xlarge + instance store SSD
     # FIXME        ^
-    #cmd=''$cmd' --block-device-mappings "NoDevice=\"\""'
+    cmd=''$cmd' --block-device-mappings "NoDevice=\"\""'
     ;;
   c5.9xlarge)
     # c5.9xlarge + ebs io1 volume
     #echo --block-device-mappings "'DeviceName=/dev/sda1,VirtualName=/dev/xvdc,Ebs={DeleteOnTermination=true,SnapshotId=snap-05ddc125d72e3592d,VolumeSize=8,VolumeType=\"io1\",Iops=1000}'"
     cmd=''"$cmd"' --block-device-mappings \"DeviceName=/dev/xvdc,VirtualName=/dev/xvdc,Ebs=\{DeleteOnTermination=true,VolumeSize=8,VolumeType=io1,Iops=100\}\"'
-    # FIXME: update docker-daemon.json because "Device /dev/xvdc not found"
+    # FIXME: works with overlay2, but "Device /dev/xvdc not found" with devicemapper
     ;;
   r4.8xlarge)
     # r4.8xlarge + in-memory docker
@@ -233,7 +232,7 @@ run_instances() {
     die "Unknown instance type $instance_type"
     ;;
   esac
-  # Run command and also display it
+
   eval "echo $cmd"
 }
 

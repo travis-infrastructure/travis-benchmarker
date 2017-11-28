@@ -24,7 +24,7 @@ for instance_type in $instance_types; do
     for graph_driver in $graph_drivers; do
       cmd="./benchmark.sh $count $instance_type $docker_method $graph_driver"
       echo "$cmd" | bash
-      sleep 600
+      #sleep 600
     done
   done
 done
