@@ -11,7 +11,9 @@ __extra() {
 
   sed -i 's/#force_color_prompt=yes/force_color_prompt=yes/' /root/.bashrc
 
-  if [[ "$DOCKER_GRAPH_DRIVER" == "devicemapper" ]] && blkid /dev/nvme0n1p1 | grep ext4; then
+  #if [[ "$DOCKER_GRAPH_DRIVER" == "devicemapper" ]] && blkid /dev/nvme0n1p1 | grep ext4; then
+  instance_type="$(curl -sSL http://169.254.169.254/latest/meta-data/instance-type)"
+  if [[ "$instance_type" == "c5.9xlarge" ]]; then
     sed -i "s/xvdc/nvme1n1/" /usr/local/bin/travis-docker-volume-setup
   fi
 

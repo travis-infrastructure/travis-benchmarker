@@ -127,6 +127,22 @@
         "total": "12:18.22",
         "volume_type": "ext3?"
     },
+    "i-00c33b796ca10b7b8": {
+        "OK": "OK",
+        "boot_time": "11/29 03:34:06",
+        "ci-finish": 376,
+        "ci-start": 17,
+        "cohort_size": "1",
+        "filesystem": "[Backing Filesystem xfs]",
+        "graphdriver": "devicemapper",
+        "images": "3",
+        "instance_ipv4": "10.10.2.218",
+        "instance_type": "c3.8xlarge",
+        "mem": "58G",
+        "method": "import",
+        "total": "5:42.82",
+        "volume_type": "direct-lvm"
+    },
     "i-00d0c59e69faa7ab3": {
         "OK": "OK",
         "boot_time": "11/25 02:18:36",
@@ -206,6 +222,21 @@
         "method": "import",
         "total": "5:44.00",
         "volume_type": "ext3?"
+    },
+    "i-011b190a3af433128": {
+        "OK": "NOK",
+        "boot_time": "11/29 00:57:47",
+        "ci-start": 16,
+        "cohort_size": "1",
+        "filesystem": "",
+        "graphdriver": "",
+        "images": "0",
+        "instance_ipv4": "10.10.2.20",
+        "instance_type": "c5.9xlarge",
+        "mem": "68G",
+        "method": "pull-mirror",
+        "total": "",
+        "volume_type": "__DOCKER_VOLUME_TYPE__"
     },
     "i-011c6fc2502bc5088": {
         "OK": "OK",
@@ -400,19 +431,20 @@
         "volume_type": "direct-lvm"
     },
     "i-02374f44cfbaced4c": {
-        "OK": "NOK",
+        "OK": "OK",
         "boot_time": "11/29 00:47:49",
+        "ci-finish": 500,
         "ci-start": 19,
         "cohort_size": "1",
-        "filesystem": "",
-        "graphdriver": "",
-        "images": "0",
+        "filesystem": "[Backing Filesystem xfs]",
+        "graphdriver": "devicemapper",
+        "images": "3",
         "instance_ipv4": "10.10.2.146",
         "instance_type": "c5.9xlarge",
         "mem": "68G",
         "method": "pull-mirror",
-        "total": "",
-        "volume_type": "__DOCKER_VOLUME_TYPE__"
+        "total": "5:05.74",
+        "volume_type": "EXT4"
     },
     "i-024d89c7f23d9e112": {
         "OK": "OK",
@@ -479,19 +511,20 @@
         "volume_type": "direct-lvm"
     },
     "i-028444f160912cbbb": {
-        "OK": "NOK",
+        "OK": "OK",
         "boot_time": "11/29 00:47:48",
+        "ci-finish": 303,
         "ci-start": 14,
         "cohort_size": "1",
-        "filesystem": "",
-        "graphdriver": "",
-        "images": "0",
+        "filesystem": "[Backing Filesystem extfs]",
+        "graphdriver": "overlay2",
+        "images": "3",
         "instance_ipv4": "10.10.2.107",
         "instance_type": "c5.9xlarge",
         "mem": "68G",
         "method": "pull-mirror",
-        "total": "",
-        "volume_type": "__DOCKER_VOLUME_TYPE__"
+        "total": "4:36.78",
+        "volume_type": "EXT4"
     },
     "i-0293905f0936c736a": {
         "OK": "OK",
@@ -621,6 +654,22 @@
         "total": "6:49.56",
         "volume_type": "ext3?"
     },
+    "i-02fc8475d3a0c06e8": {
+        "OK": "OK",
+        "boot_time": "11/29 03:34:18",
+        "ci-finish": 596,
+        "ci-start": 14,
+        "cohort_size": "1",
+        "filesystem": "[Backing Filesystem xfs]",
+        "graphdriver": "devicemapper",
+        "images": "3",
+        "instance_ipv4": "10.10.2.61",
+        "instance_type": "c3.8xlarge",
+        "mem": "58G",
+        "method": "pull-mirror",
+        "total": "9:27.35",
+        "volume_type": "direct-lvm"
+    },
     "i-03087d56e888cce07": {
         "OK": "OK",
         "boot_time": "11/25 01:38:27",
@@ -652,6 +701,22 @@
         "method": "import",
         "total": "6:37.45",
         "volume_type": "ext3?"
+    },
+    "i-033c09b50d1ccf7b5": {
+        "OK": "OK",
+        "boot_time": "11/29 03:28:28",
+        "ci-finish": 174,
+        "ci-start": 16,
+        "cohort_size": "1",
+        "filesystem": "[Backing Filesystem xfs]",
+        "graphdriver": "devicemapper",
+        "images": "3",
+        "instance_ipv4": "10.10.2.82",
+        "instance_type": "c5.9xlarge",
+        "mem": "68G",
+        "method": "import",
+        "total": "2:21.50",
+        "volume_type": "EXT4"
     },
     "i-0354d61064d819bb3": {
         "OK": "NOK",
@@ -877,6 +942,22 @@
         "total": "6:52.46",
         "volume_type": "ext3?"
     },
+    "i-0406dd1f67387a912": {
+        "OK": "OK",
+        "boot_time": "11/29 03:27:59",
+        "ci-finish": 96,
+        "ci-start": 15,
+        "cohort_size": "1",
+        "filesystem": "[Backing Filesystem extfs]",
+        "graphdriver": "overlay2",
+        "images": "3",
+        "instance_ipv4": "10.10.2.51",
+        "instance_type": "c5.9xlarge",
+        "mem": "68G",
+        "method": "import",
+        "total": "1:06.49",
+        "volume_type": "EXT4"
+    },
     "i-043c80a0cc3016c95": {
         "OK": "OK",
         "boot_time": "11/24 21:04:45",
@@ -957,6 +1038,22 @@
         "total": "8:40.66",
         "volume_type": "ext3?"
     },
+    "i-04953196e9b32960f": {
+        "OK": "OK",
+        "boot_time": "11/29 03:34:24",
+        "ci-finish": 759,
+        "ci-start": 14,
+        "cohort_size": "1",
+        "filesystem": "[Backing Filesystem xfs]",
+        "graphdriver": "devicemapper",
+        "images": "3",
+        "instance_ipv4": "10.10.2.162",
+        "instance_type": "c3.8xlarge",
+        "mem": "58G",
+        "method": "pull-hub",
+        "total": "12:10.50",
+        "volume_type": "direct-lvm"
+    },
     "i-049d60d91fbe88fd7": {
         "OK": "OK",
         "boot_time": "11/25 01:17:11",
@@ -974,19 +1071,20 @@
         "volume_type": "direct-lvm"
     },
     "i-04b7b3f9e46b2ef77": {
-        "OK": "NOK",
+        "OK": "OK",
         "boot_time": "11/29 00:51:28",
+        "ci-finish": 293,
         "ci-start": 15,
         "cohort_size": "1",
-        "filesystem": "",
-        "graphdriver": "",
-        "images": "0",
+        "filesystem": "[Backing Filesystem extfs]",
+        "graphdriver": "overlay2",
+        "images": "3",
         "instance_ipv4": "10.10.2.94",
         "instance_type": "c5.9xlarge",
         "mem": "68G",
         "method": "pull-mirror",
-        "total": "",
-        "volume_type": "__DOCKER_VOLUME_TYPE__"
+        "total": "4:24.56",
+        "volume_type": "EXT4"
     },
     "i-04c14a62a4c37c7c6": {
         "OK": "OK",
@@ -1225,6 +1323,22 @@
         "method": "pull-mirror",
         "total": "6:39.37",
         "volume_type": "ext3?"
+    },
+    "i-05fbf58f4598665e4": {
+        "OK": "OK",
+        "boot_time": "11/29 00:56:13",
+        "ci-finish": 301,
+        "ci-start": 13,
+        "cohort_size": "1",
+        "filesystem": "[Backing Filesystem extfs]",
+        "graphdriver": "overlay2",
+        "images": "3",
+        "instance_ipv4": "10.10.2.188",
+        "instance_type": "c5.9xlarge",
+        "mem": "68G",
+        "method": "pull-mirror",
+        "total": "4:36.26",
+        "volume_type": "EXT4"
     },
     "i-062dafcbfd2887175": {
         "OK": "NOK",
@@ -1594,6 +1708,22 @@
         "total": "4:06.23",
         "volume_type": "ext3?"
     },
+    "i-0814b4934b5078436": {
+        "OK": "OK",
+        "boot_time": "11/29 01:06:26",
+        "ci-finish": 294,
+        "ci-start": 16,
+        "cohort_size": "1",
+        "filesystem": "[Backing Filesystem extfs]",
+        "graphdriver": "overlay2",
+        "images": "3",
+        "instance_ipv4": "10.10.2.124",
+        "instance_type": "c5.9xlarge",
+        "mem": "68G",
+        "method": "pull-mirror",
+        "total": "4:25.39",
+        "volume_type": "EXT4"
+    },
     "i-0819c9c0d792d566f": {
         "OK": "OK",
         "boot_time": "11/25 02:08:32",
@@ -1832,6 +1962,22 @@
         "mem": "58G",
         "method": "pull-mirror",
         "total": "6:37.75",
+        "volume_type": "ext3?"
+    },
+    "i-08ddc086ea1563ae6": {
+        "OK": "OK",
+        "boot_time": "11/29 03:34:31",
+        "ci-finish": 338,
+        "ci-start": 14,
+        "cohort_size": "1",
+        "filesystem": "[Backing Filesystem extfs]",
+        "graphdriver": "overlay2",
+        "images": "3",
+        "instance_ipv4": "10.10.2.164",
+        "instance_type": "c3.8xlarge",
+        "mem": "58G",
+        "method": "import",
+        "total": "5:07.12",
         "volume_type": "ext3?"
     },
     "i-08ec0c1804e7b077c": {
@@ -2793,6 +2939,22 @@
         "total": "5:57.79",
         "volume_type": "direct-lvm"
     },
+    "i-0dac02d8d8eeb4eb6": {
+        "OK": "OK",
+        "boot_time": "11/29 03:34:43",
+        "ci-finish": 554,
+        "ci-start": 14,
+        "cohort_size": "1",
+        "filesystem": "[Backing Filesystem extfs]",
+        "graphdriver": "overlay2",
+        "images": "3",
+        "instance_ipv4": "10.10.2.205",
+        "instance_type": "c3.8xlarge",
+        "mem": "58G",
+        "method": "pull-hub",
+        "total": "8:46.59",
+        "volume_type": "ext3?"
+    },
     "i-0db4a9f633c0cfa74": {
         "OK": "OK",
         "boot_time": "11/28 00:40:23",
@@ -2872,6 +3034,22 @@
         "method": "pull-hub",
         "total": "11:43.25",
         "volume_type": "ext3?"
+    },
+    "i-0dfcb2083b98d0ff8": {
+        "OK": "OK",
+        "boot_time": "11/29 01:06:11",
+        "ci-finish": 367,
+        "ci-start": 28,
+        "cohort_size": "1",
+        "filesystem": "[Backing Filesystem xfs]",
+        "graphdriver": "devicemapper",
+        "images": "3",
+        "instance_ipv4": "10.10.2.102",
+        "instance_type": "c5.9xlarge",
+        "mem": "68G",
+        "method": "pull-mirror",
+        "total": "5:19.17",
+        "volume_type": "EXT4"
     },
     "i-0e1330328e7c1c17b": {
         "OK": "OK",
@@ -3065,6 +3243,22 @@
         "total": "2:32.03",
         "volume_type": "ext3?"
     },
+    "i-0ebb17a127b5964b7": {
+        "OK": "OK",
+        "boot_time": "11/29 03:34:37",
+        "ci-finish": 582,
+        "ci-start": 13,
+        "cohort_size": "1",
+        "filesystem": "[Backing Filesystem extfs]",
+        "graphdriver": "overlay2",
+        "images": "3",
+        "instance_ipv4": "10.10.2.44",
+        "instance_type": "c3.8xlarge",
+        "mem": "58G",
+        "method": "pull-mirror",
+        "total": "9:15.57",
+        "volume_type": "ext3?"
+    },
     "i-0ee5729660177123d": {
         "OK": "OK",
         "boot_time": "11/25 01:38:24",
@@ -3194,19 +3388,20 @@
         "volume_type": "ext3?"
     },
     "i-0f8317a8dac9a9b9d": {
-        "OK": "NOK",
+        "OK": "OK",
         "boot_time": "11/29 00:51:23",
+        "ci-finish": 670,
         "ci-start": 21,
         "cohort_size": "1",
-        "filesystem": "",
-        "graphdriver": "",
-        "images": "0",
+        "filesystem": "[Backing Filesystem xfs]",
+        "graphdriver": "devicemapper",
+        "images": "3",
         "instance_ipv4": "10.10.2.86",
         "instance_type": "c5.9xlarge",
         "mem": "68G",
         "method": "pull-mirror",
-        "total": "",
-        "volume_type": "__DOCKER_VOLUME_TYPE__"
+        "total": "10:35.25",
+        "volume_type": "EXT4"
     },
     "i-0f8f70f3cc304b3af": {
         "OK": "OK",

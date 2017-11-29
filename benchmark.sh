@@ -231,6 +231,7 @@ run_instances() {
     else
         die "Unknown graph driver $graph_driver"
     fi
+    #device_name="sda1"
     cmd=''"$cmd"' --block-device-mappings \"DeviceName=/dev/'$device_name',Ebs=\{DeleteOnTermination=true,VolumeSize=80,VolumeType=io1,Iops='$iops'\}\"'
     ;;
   r4.8xlarge)
