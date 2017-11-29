@@ -35,12 +35,12 @@ __post_extra() {
     # /dev/xvdc: UUID="aa75b9db-5e39-4bb9-99e3-763224f1de98" SEC_TYPE="ext2" TYPE="ext3"
   if blkid /dev/xvdc | grep LVM; then
     volume_type="direct-lvm"
-  elif blkid /dev/xvdc | grep ext3; then
-    volume_type="ext3\?"
   elif blkid /dev/xvda1 | grep ext4; then
-    volume_type="ext4"
-  elif blkid /dev/nvme0n1p1 | grep ext4; then
     volume_type="EXT4"
+  elif blkid /dev/xvdc | grep ext3; then
+    volume_type="ext3"
+  elif blkid /dev/nvme0n1p1 | grep ext4; then
+    volume_type="ext4"
   else
     volume_type="unknown"
   fi

@@ -235,8 +235,16 @@ run_instances() {
     cmd=''"$cmd"' --block-device-mappings \"DeviceName=/dev/'$device_name',Ebs=\{DeleteOnTermination=true,VolumeSize=80,VolumeType=io1,Iops='$iops'\}\"'
     ;;
   r4.8xlarge)
-    # r4.8xlarge + in-memory docker
-    cmd=''"$cmd"' --block-device-mappings "NoDevice=\"\""'
+    if [[ "$graph_driver" == "devicemapper" ]]; then
+        device_name="xvdc"
+    elif [[ "$graph_driver" == "overlay2" ]]; then
+        device_name="sda1"
+    else
+        die "Unknown graph driver $graph_driver"
+    fi
+    # r4.8xlarge + in-memory docker (r4 instances do not support instance store)
+    cmd=''"$cmd"' --block-device-mappings \"NoDevice=\"\",DeviceName=/dev/'$device_name',Ebs=\{DeleteOnTermination=true,VolumeSize=80,VolumeType=gp2\}\"'
+    #cmd=''"$cmd"' --block-device-mappings "NoDevice=\"\""'
     ;;
   *)
     die "Unknown instance type $instance_type"
