@@ -11,6 +11,10 @@ __extra() {
 
   sed -i 's/#force_color_prompt=yes/force_color_prompt=yes/' /root/.bashrc
 
+  if [[ "$DOCKER_GRAPH_DRIVER" == "devicemapper" ]] && blkid /dev/nvme0n1p1 | grep ext4; then
+    sed -i "s/xvdc/nvme1n1/" /usr/local/bin/travis-docker-volume-setup
+  fi
+
   cat /tmp/benchmark.env >>/etc/default/travis-worker-cloud-init
   source /etc/default/travis-worker-cloud-init
 }
@@ -33,6 +37,8 @@ __post_extra() {
     volume_type="ext3\?"
   elif blkid /dev/xvda1 | grep ext4; then
     volume_type="ext4"
+  elif blkid /dev/nvme0n1p1 | grep ext4; then
+    volume_type="EXT4"
   else
     volume_type="unknown"
   fi

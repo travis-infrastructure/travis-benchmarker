@@ -6,6 +6,8 @@ count="$1"
 instance_types="
   c3.2xlarge
   c3.8xlarge
+  r4.8xlarge
+  c5.9xlarge
 "
 
 docker_methods="

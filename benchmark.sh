@@ -41,7 +41,6 @@ make_multipart() {
   docker_method="$2"
   docker_graph_driver="$3"
   cohort_size="$4"
-  label="data"
 
   read -r -d '' HEADER <<EOF
 Content-Type: multipart/mixed; boundary="MIMEBOUNDARY"
@@ -109,7 +108,7 @@ EOF
     s@__DOCKER_DAEMON_JSON__@$docker_daemon_config@
     s@__DOCKER_VOLUME_SETUP__@$docker_volume_setup@
     s@__DOCKER_GRAPH_DRIVER__@$docker_graph_driver@
-    " "${label}/cloud-config.yml" \
+    " data/cloud-config.yml \
     >>"$dest"
 
   ##################
@@ -170,6 +169,9 @@ make_docker_daemon_json() {
     docker_daemon_config="$(echo "$docker_daemon_config" | sed 's/.*registry-mirrors.*//')"
   fi
 
+  #if [[ "$instance_type" == "" ]]; then
+  #fi
+
   echo "$docker_daemon_config"
 }
 
@@ -184,17 +186,18 @@ make_benchmark_env() {
     s@__DOCKER_CONFIG__@$docker_config_file_dest@
     s@__COHORT_SIZE__@$cohort_size@
     s@__DOCKER_GRAPH_DRIVER__@$docker_graph_driver@
-    " "${label}/benchmark.env"
+    " data/benchmark.env
 }
 
 run_instances() {
   instance_type="$1"
   docker_method="$2"
   count="$3"
-  label="data"
+  graph_driver="$4"
   # This can be gp2 for General Purpose SSD, io1 for Provisioned IOPS SSD, st1 for Throughput Optimized HDD, sc1 for Cold HDD, or standard for Magnetic volumes.
   # subnet-2e369b67 => us-east-1b
   # subnet-addd3791 => us-east-1e (io1 not supported in this AZ)
+  # subnet-2f369b66 => production?
 
   cmd="aws ec2 run-instances \
     --region us-east-1 \
@@ -208,7 +211,7 @@ run_instances() {
     --user-data fileb://data/user-data.multipart.gz \
     --tag-specifications "'"ResourceType=instance,Tags=[\{Key=role,Value=aj-test\},\{Key=instance_type,Value='$instance_type'\},\{Key=docker_method,Value='$docker_method'\},\{Key=cohort_size,Value='$count'\}]"'""
 
-  # Note: --block-device-mappings can also be provided as a file, e.g. file://${label}/mapping.json
+  # Note: --block-device-mappings can also be provided as a file, e.g. file://${label}-mapping.json
   # To override the AMI default, use "NoDevice="
   case "$instance_type" in
   c3.2xlarge) ;;
@@ -220,9 +223,15 @@ run_instances() {
     ;;
   c5.9xlarge)
     # c5.9xlarge + ebs io1 volume
-    #echo --block-device-mappings "'DeviceName=/dev/sda1,VirtualName=/dev/xvdc,Ebs={DeleteOnTermination=true,SnapshotId=snap-05ddc125d72e3592d,VolumeSize=8,VolumeType=\"io1\",Iops=1000}'"
-    cmd=''"$cmd"' --block-device-mappings \"DeviceName=/dev/xvdc,VirtualName=/dev/xvdc,Ebs=\{DeleteOnTermination=true,VolumeSize=8,VolumeType=io1,Iops=100\}\"'
-    # FIXME: works with overlay2, but "Device /dev/xvdc not found" with devicemapper
+    iops=2000
+    if [[ "$graph_driver" == "devicemapper" ]]; then
+        device_name="xvdc"
+    elif [[ "$graph_driver" == "overlay2" ]]; then
+        device_name="sda1"
+    else
+        die "Unknown graph driver $graph_driver"
+    fi
+    cmd=''"$cmd"' --block-device-mappings \"DeviceName=/dev/'$device_name',Ebs=\{DeleteOnTermination=true,VolumeSize=80,VolumeType=io1,Iops='$iops'\}\"'
     ;;
   r4.8xlarge)
     # r4.8xlarge + in-memory docker
@@ -238,13 +247,12 @@ run_instances() {
 
 make_cohort() {
   cohort_size="$1"
-  label="data"
   instance_type="$2"
   docker_method="$3"
 
   make_multipart "$instance_type" "$docker_method" "$docker_graph_driver" "$cohort_size"
 
-  run_instances_cmd="$(run_instances "$instance_type" "$docker_method" "$cohort_size")"
+  run_instances_cmd="$(run_instances "$instance_type" "$docker_method" "$cohort_size" "$docker_graph_driver")"
   echo "$run_instances_cmd"
   echo "$run_instances_cmd" | bash >last_instance_run.json
 }
