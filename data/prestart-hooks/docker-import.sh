@@ -53,7 +53,7 @@ __docker_pre_import() {
   docker images
   for image in $images; do
     if ! docker inspect "$image" >/dev/null; then
-      curl -sSL "http://aj-benchmark.s3.amazonaws.com/${image}.tar.lzo" | lzop -d | docker import --message "New image imported from s3" - "${image}" &
+      curl --retry 3 -sSL "http://aj-benchmark.s3.amazonaws.com/${image}.tar.lzo" | lzop -d | docker import --message "New image imported from s3" - "${image}" &
     fi
   done
   wait
